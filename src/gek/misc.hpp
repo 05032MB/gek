@@ -26,18 +26,6 @@ namespace GEK
         }
     }
 
-    auto createWindow(int w, int h, std::string title)
-    {
-        auto *window = glfwCreateWindow(w, h, title.c_str(), nullptr, nullptr);
-
-        if(window == nullptr)
-        {
-            throw new recoverableExcept("Window init failed");
-        }
-
-        return window;
-    }
-
 }
 
 #endif

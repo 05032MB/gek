@@ -7,6 +7,7 @@
 #include <gek/misc.hpp>
 #include <gek/shaderProgram.hpp>
 #include <gek/primitivez/primitives.hpp>
+#include <gek/window.hpp>
 
 using namespace GEK;
 
@@ -27,16 +28,16 @@ int main()
 {
     GEK::initGLFW();
 
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    window win;
 
-    auto window = GEK::createWindow(800, 600, "pdoomu");
+    win.hint(GLFW_CONTEXT_VERSION_MAJOR, 3, GLFW_CONTEXT_VERSION_MINOR, 3, GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-    glfwMakeContextCurrent(window);
+    win.createWindow(800, 600, "pdoomu");
+
+    win.setCurrent();
     glViewport(0, 0, 800, 600);
 
-    glfwSetFramebufferSizeCallback(window, resizeWindowCb);
+    glfwSetFramebufferSizeCallback(win(), resizeWindowCb);
 
     GEK::initGLEW();
 
@@ -65,20 +66,19 @@ int main()
 
     shp.activate();
 //////////
-    while(!glfwWindowShouldClose(window))
+    while(!glfwWindowShouldClose(win()))
     {
-        processInput(window);
+        processInput(win());
 
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
         tr.draw();
 
-        glfwSwapBuffers(window);
+        glfwSwapBuffers(win());
         glfwPollEvents();    
     }
 
-    glfwDestroyWindow(window);
     glfwTerminate();
 
     return 0;
