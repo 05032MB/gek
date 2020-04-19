@@ -6,6 +6,10 @@
 
 #include <memory>
 #include <iostream>
+
+namespace GEK
+{
+
 class shaderProgram
 {
     unsigned int shaderProgramId;
@@ -93,4 +97,5 @@ public:
 
 };
 
+}
 #endif

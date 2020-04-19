@@ -10,6 +10,9 @@
 
 #include <gek/except.hpp>
 
+namespace GEK
+{
+
 class shader
 {
     unsigned int shaderId{0};
@@ -109,4 +112,5 @@ class shader
     
 };
 
+}
 #endif

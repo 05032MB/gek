@@ -6,8 +6,12 @@
 
 #include <vector>
 
+#include <gek/idrawable.hpp>
 
-class primitive
+namespace GEK
+{
+
+class primitive : public iDrawable
 {
     protected:
     unsigned int vbo, vao; //vertex buffer object, vertex array buffer
@@ -43,8 +47,7 @@ class primitive
 
     virtual void bind() = 0;
 
-    virtual void draw() = 0;
-
 };
 
+}
 #endif

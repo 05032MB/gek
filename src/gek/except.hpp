@@ -4,6 +4,9 @@
 #include <string.h>
 #include <sstream>
 
+namespace GEK
+{
+
 struct except
 {
     std::string what;
@@ -35,4 +38,5 @@ struct failExcept : public except
     using except::except;
 };
 
+}
 #endif

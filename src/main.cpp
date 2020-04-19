@@ -6,7 +6,9 @@
 
 #include <gek/misc.hpp>
 #include <gek/shaderProgram.hpp>
-#include <gek/primitivez/rectangle.hpp>
+#include <gek/primitivez/primitives.hpp>
+
+using namespace GEK;
 
 void resizeWindowCb(GLFWwindow* window, int width, int height)
 {
@@ -58,7 +60,7 @@ int main()
         exit(2);
     }
 
-    rectangle tr;
+    triangle tr;
     tr.bind();
 
     shp.activate();
