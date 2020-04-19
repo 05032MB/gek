@@ -10,7 +10,7 @@ class shaderProgram
 {
     unsigned int shaderProgramId;
 
-    std::vector<std::unique_ptr<shader>> shaders;
+    std::vector<std::shared_ptr<shader>> shaders;
 
     void initShaderProgram()
     {
@@ -36,15 +36,15 @@ public:
         }
     }
 
-    void enslaveShader(std::unique_ptr<shader> sh)
+    void enslaveShader(std::shared_ptr<shader> sh)
     {
-        shaders.push_back(std::move(sh));
+        shaders.push_back(sh);
     }
 
     template<typename... Args>
     void enslaveShader(Args && ... shr)
     {
-        (shaders.push_back(std::move(shr)), ...);
+        (shaders.push_back(shr), ...);
     }
 
     void compile()
@@ -72,7 +72,7 @@ public:
         }
     }
 
-    void cullShaders()
+    void releaseShaders()
     {
         std::cout<<"Shader cull begin for program "<<shaderProgramId<<std::endl;
         for(auto & i : shaders)
