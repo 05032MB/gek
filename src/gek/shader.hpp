@@ -32,8 +32,11 @@ class shader
 
     ~shader()
     {
-        std::cout<<"Freeing shader "<<shaderId<<std::endl;
-        glDeleteShader(shaderId);
+        if(shaderId)
+        {
+            std::cout<<"Freeing shader "<<shaderId<<std::endl;
+            glDeleteShader(shaderId);
+        }
     }
 
     void createShader()
