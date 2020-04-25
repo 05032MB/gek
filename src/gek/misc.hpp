@@ -10,6 +10,16 @@
 
 namespace GEK
 {
+
+#ifdef __GNUC__
+#define unlikely(x) __builtin_expect(x, 0)
+#define likely(x) __builtin_expect(x, 1)
+#else
+#warning "Profiling hinting impossible (don't worry it hardly matters)."
+#define unlikely(x) x
+#define likely(x) x
+#endif
+
     void initGLFW()
     {
         if(glfwInit() == GLFW_FALSE)
