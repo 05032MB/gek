@@ -3,6 +3,7 @@
 
 #include <gek/shader.hpp>
 #include <gek/except.hpp>
+#include <gek/interfacez/cullable.hpp>
 
 #include <memory>
 #include <iostream>
@@ -10,7 +11,7 @@
 namespace GEK
 {
 
-class shaderProgram
+class shaderProgram : public iCullable
 {
     unsigned int shaderProgramId;
 
@@ -32,7 +33,7 @@ class shaderProgram
     #define GEN_SETUNIFORM(type, postfix, expected)            \
     void setUniform(std::string name, type t)                  \
     {                                                          \
-        GLUE_UNIFORM_##expected(postfix, name, t);              \
+        GLUE_UNIFORM_##expected(postfix, name, t);             \
     }
 
 public:
@@ -93,6 +94,11 @@ public:
         {
             i.reset();
         }
+    }
+
+    void cull() override
+    {
+        releaseShaders();
     }
 
     int getUniform(std::string name) const
