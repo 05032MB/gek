@@ -6,7 +6,7 @@
 
 #include <vector>
 
-#include <gek/idrawable.hpp>
+#include <gek/interfacez/idrawable.hpp>
 
 namespace GEK
 {
@@ -17,6 +17,7 @@ class primitive : public iDrawable
     unsigned int vbo, vao; //vertex buffer object, vertex array buffer
 
     std::vector<float> vertices;
+    std::vector<float> texVertices;
 
     public:
     primitive()

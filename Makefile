@@ -5,7 +5,7 @@ HDRZ=
 TRGT= pdoomu.app
 
 all: $(SRCZ) $(HDRZ)
-	$(CXX) $(SRCZ) -o $(TRGT) -std=c++17 -g -I src/ $(LIBZ)
+	$(CXX) $(SRCZ) -o $(TRGT) -std=c++17 -g -I stb/ -I src/ $(LIBZ)
 
 clean:
 	rm -rf $(TRGT)
