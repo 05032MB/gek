@@ -1,5 +1,7 @@
 #version 330 core
-
+/*
+Trivial for testing
+*/
 out vec4 FragColor;
 
 void main()
