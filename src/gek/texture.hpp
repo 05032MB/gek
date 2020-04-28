@@ -29,6 +29,7 @@ class texture : iCullable
     std::string fileName;
 
     std::map<GLenum, GLenum> opts;
+    bool flip{false};
 
     public:
 
@@ -47,9 +48,10 @@ class texture : iCullable
     }
     //end
 
-    texture(std::string where)
+    texture(std::string where, bool flip=false)
     {
         fileName = where;
+        this->flip = flip;
         glGenTextures(1, &texId);
     }
     ~texture()
@@ -64,6 +66,7 @@ class texture : iCullable
 
     void load()
     {
+        stbi_set_flip_vertically_on_load(flip);
         stbiData.reset(stbi_load(fileName.c_str(), &width, &height, &nChannels, 0));
 
         if(!stbiData)
@@ -85,7 +88,14 @@ class texture : iCullable
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, stbiData.get());
         glGenerateMipmap(GL_TEXTURE_2D);
 
+        glBindTexture(GL_TEXTURE_2D, 0);
+
         stbiData.reset();
+    }
+
+    void use()
+    {
+        bindTex();
     }
 
     void cull() override

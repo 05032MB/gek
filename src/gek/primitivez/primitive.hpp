@@ -11,34 +11,33 @@
 namespace GEK
 {
 
-class primitive : public iDrawable
+class primitive : public iDrawable, public iHasTex
 {
     protected:
-    unsigned int vbo, vao; //vertex buffer object, vertex array buffer
+    unsigned int vao;
 
-    std::vector<float> vertices;
-    std::vector<float> texVertices;
+    template <typename T>
+    using underlyingType = typename T::value_type;
 
     public:
     primitive()
     {
-        glGenBuffers(1, &vbo);
         glGenVertexArrays(1, &vao);
     }
     ~primitive()
     {
-        glDeleteBuffers(1, &vbo);
         glDeleteVertexArrays(1, &vao);
     }
 
-    void bind(int index, int size, int stride, bool normalize = false, GLenum usage = GL_STATIC_DRAW)
+    template <typename T>
+    void bind(int index, int size, int stride, const T& data, unsigned int buff, bool normalize = false, GLenum usage = GL_STATIC_DRAW)
     {
         glBindVertexArray(vao);
 
-        glBindBuffer(GL_ARRAY_BUFFER, vbo);
-        glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(float), vertices.data(), usage);
+        glBindBuffer(GL_ARRAY_BUFFER, buff);
+        glBufferData(GL_ARRAY_BUFFER, data.size() * sizeof(underlyingType<T>), data.data(), usage);
 
-        glVertexAttribPointer(index, size, GL_FLOAT, normalize, stride * sizeof(float), (void*)0);
+        glVertexAttribPointer(index, size, GL_FLOAT, normalize, stride * sizeof(underlyingType<T>), (void*)0);
         glEnableVertexAttribArray(index);  
 
         glBindBuffer(GL_ARRAY_BUFFER, 0);

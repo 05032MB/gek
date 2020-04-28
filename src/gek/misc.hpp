@@ -36,6 +36,25 @@ namespace GEK
         }
     }
 
+    struct vbo
+    {
+        unsigned int buffer;
+        vbo()
+        {
+            glGenBuffers(1, &buffer);
+        }
+        ~vbo()
+        {
+            glDeleteBuffers(1, &buffer);
+        }
+
+        operator int() const
+        {
+            return buffer;
+        }
+
+    };
+
 }
 
 #endif

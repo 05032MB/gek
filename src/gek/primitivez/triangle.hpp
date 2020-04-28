@@ -16,12 +16,19 @@ class triangle : public primitive
         -1.0f, -1.0f, 0.0f, // left  
          1.0f, -1.0f, 0.0f, // right 
          0.0f,  1.0f, 0.0f  // top   
-         };
+        };
+
+        this->tex = std::vector{
+         0.0f, 0.0f,  // lower-left corner  
+         1.0f, 1.0f,  // lower-right corner
+         0.5f, 1.0f   // top-center corner
+        };
     }
 
     void bind() override
     {
-        this->primitive::bind(0, 3, 3);
+        this->primitive::bind(0, 3, 3, this->vertices, vVertices);
+        this->primitive::bind(1, 3, 2, this->tex, vTex);
     }
 
     void draw() override
