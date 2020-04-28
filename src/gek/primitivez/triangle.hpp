@@ -20,7 +20,7 @@ class triangle : public primitive
 
         this->tex = std::vector{
          0.0f, 0.0f,  // lower-left corner  
-         1.0f, 1.0f,  // lower-right corner
+         1.0f, 0.0f,  // lower-right corner
          0.5f, 1.0f   // top-center corner
         };
     }
@@ -28,7 +28,7 @@ class triangle : public primitive
     void bind() override
     {
         this->primitive::bind(0, 3, 3, this->vertices, vVertices);
-        this->primitive::bind(1, 3, 2, this->tex, vTex);
+        this->primitive::bind(1, 2, 2, this->tex, vTex);
     }
 
     void draw() override
