@@ -21,6 +21,7 @@ class window
     };
 
     std::unique_ptr<GLFWwindow, GLFWwinDestroyer> win;
+    int w, h;
 
     void hint()
     {}
@@ -70,7 +71,20 @@ class window
             throw new recoverableExcept("Window init failed");
         }
 
+        this->w = w;
+        this->h = h;
+
         return win.get();
+    }
+
+    const auto width() const
+    {
+        return w;
+    }
+    
+    const auto height() const
+    {
+        return h;
     }
 };
 

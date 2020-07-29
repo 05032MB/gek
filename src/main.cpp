@@ -1,5 +1,10 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
+
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+
 #include <cstdlib>
 
 #include <iostream>
@@ -8,6 +13,8 @@
 #include <gek/shaderProgram.hpp>
 #include <gek/primitivez/primitives.hpp>
 #include <gek/window.hpp>
+#include <gek/transform.hpp>
+#include <gek/texture.hpp>
 
 using namespace GEK;
 
@@ -44,39 +51,69 @@ int main()
     errno = 0; //gLfw NiE usTaWia ErrNo aLe wYwoŁujE dUżO fUnkcJi poŚreDnicH
 
 //////////
-    shaderProgram shp;
+    auto shp = std::make_shared<shaderProgram>();
 
-    auto shader1 = std::make_shared<shader>("src/shaderz/vertexTrivial.glsl", GL_VERTEX_SHADER);
+    auto sha3D = std::make_shared<shader>("src/shaderz/vertex/vertex3d.glsl", GL_VERTEX_SHADER);
 
     try{
-        shp.enslaveShader( shader1,
-                          std::make_shared<shader>("src/shaderz/fragmentTrivial.glsl", GL_FRAGMENT_SHADER));
+        
+        sha3D->createShader();
 
-        shp.compile();
-        shp.releaseShaders();
+        shp->enslaveShader( sha3D,
+                          std::make_shared<shader>("src/shaderz/fragment/fragment.glsl", GL_FRAGMENT_SHADER));
 
-    }catch(failExcept *e)
-    {
-        std::cout<<e->what<<std::endl;
-        exit(2);
-    }
+        shp->compile();
+        shp->releaseShaders();
 
-    triangle tr;
-    tr.bind();
+        shp->activate();
 
-    shp.activate();
+    cube br;
+    br.bind();
+
+    shp->activate();
+
+    texture tex("../Downloads/wall.jpg");
+    tex.createTexture();
+
 //////////
+glEnable(GL_DEPTH_TEST);  
     while(!glfwWindowShouldClose(win()))
     {
+        glm::mat4 model         = glm::mat4(1.0f); // make sure to initialize matrix to identity matrix first
+        glm::mat4 view          = glm::mat4(1.0f);
+        glm::mat4 projection    = glm::mat4(1.0f);
+        //model = glm::rotate(model, glm::radians(-55.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+        model = glm::rotate(model, (float)glfwGetTime() * glm::radians(50.0f), glm::vec3(0.5f, 1.0f, 0.0f));  
+        view  = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
+        projection = glm::perspective(glm::radians(45.0f), (float)800 / (float)600, 0.1f, 50.0f);
+
         processInput(win());
 
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
-        tr.draw();
+        tex.use();
+        
+        shp->setUniform("model", (model));
+        shp->setUniform("view", (view));
+        shp->setUniform("projection", (projection));
+        shp->setUniform("usesTexture", true);
+        shp->setUniform("color", glm::vec4(1.0f,1.0f,1.0f,1.0f));
+
+        br.draw();
+
+        if(auto err = glGetError() != GL_NO_ERROR)std::cout<<err<<std::endl;
 
         glfwSwapBuffers(win());
-        glfwPollEvents();    
+        glfwPollEvents();
+
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    }
+
+    }catch(failExcept *e)
+    {
+        std::cout<<e->what<<std::endl;
+        exit(2);
     }
 
     glfwTerminate();

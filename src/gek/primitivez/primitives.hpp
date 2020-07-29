@@ -4,5 +4,6 @@
 #include "primitive.hpp"
 #include "triangle.hpp"
 #include "rectangle.hpp"
+#include "cube.hpp"
 
 #endif
