@@ -15,8 +15,13 @@
 #include <gek/window.hpp>
 #include <gek/transform.hpp>
 #include <gek/texture.hpp>
+#include <gek/camera.hpp>
 
 using namespace GEK;
+
+float deltaTime = 0.0f;
+float lastFrame = 0.0f;
+camera cam({0,0,3});
 
 void processInput(GLFWwindow* window)
 {
@@ -24,6 +29,29 @@ void processInput(GLFWwindow* window)
     {
         glfwSetWindowShouldClose(window, true);
     }
+
+    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+        cam.moveWithKbd(camera::movement::forwards, deltaTime);
+    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+        cam.moveWithKbd(camera::movement::backwards, deltaTime);
+    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+        cam.moveWithKbd(camera::movement::lefts, deltaTime);
+    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+        cam.moveWithKbd(camera::movement::rights, deltaTime);
+    if (glfwGetKey(window, GLFW_KEY_Z) == GLFW_PRESS)
+        cam.moveWithKbd(camera::movement::ups, deltaTime);
+    if (glfwGetKey(window, GLFW_KEY_X) == GLFW_PRESS)
+        cam.moveWithKbd(camera::movement::downs, deltaTime);
+    
+    if (glfwGetKey(window, GLFW_KEY_O) == GLFW_PRESS)
+        cam.moveWithKbd(camera::movement::pitchups, deltaTime);
+    if (glfwGetKey(window, GLFW_KEY_P) == GLFW_PRESS)
+        cam.moveWithKbd(camera::movement::pitchdowns, deltaTime);
+   
+    if (glfwGetKey(window, GLFW_KEY_K) == GLFW_PRESS)
+        cam.moveWithKbd(camera::movement::yawups, deltaTime);
+    if (glfwGetKey(window, GLFW_KEY_L) == GLFW_PRESS)
+        cam.moveWithKbd(camera::movement::yawdowns, deltaTime);
 }
 
 int main()
@@ -61,17 +89,25 @@ int main()
     texture tex("../Downloads/wall.jpg");
     tex.createTexture();
 
+    //camera cam;
+
+    glm::vec3 cubePositions[] = {
+        glm::vec3( 0.0f,  0.0f,  0.0f),
+        glm::vec3( 1.0f,  0.5f,  0.7f),
+    };
+
 //////////
     glEnable(GL_DEPTH_TEST);  
     while(!glfwWindowShouldClose(win()))
     {
-        glm::mat4 model         = glm::mat4(1.0f); // make sure to initialize matrix to identity matrix first
+
+        float currentFrame = glfwGetTime();
+        deltaTime = currentFrame - lastFrame;
+        lastFrame = currentFrame;
+
+        glm::mat4 model         = glm::mat4(1.0f);
         glm::mat4 view          = glm::mat4(1.0f);
         glm::mat4 projection    = glm::mat4(1.0f);
-        //model = glm::rotate(model, glm::radians(-55.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-        model = glm::rotate(model, (float)glfwGetTime() * glm::radians(50.0f), glm::vec3(0.5f, 1.0f, 0.0f));  
-        view  = glm::translate(view, glm::vec3(0.0f, 1.0f, -10.0f));
-        projection = glm::perspective(glm::radians(45.0f), (float)win.width() / (float)win.height(), 0.1f, 50.0f);
 
         processInput(win());
 
@@ -79,14 +115,22 @@ int main()
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         tex.use();
-        
-        shp->setUniform("model", (model));
-        shp->setUniform("view", (view));
-        shp->setUniform("projection", (projection));
-        shp->setUniform("usesTexture", true);
-        shp->setUniform("color", glm::vec4(1.0f,1.0f,1.0f,1.0f));
 
-        br.draw();
+        for (unsigned int i = 0; i < 10; i++) 
+        {
+            model = glm::translate(model, cubePositions[i]);
+            //model = glm::rotate(model, (float)glfwGetTime() * glm::radians(50.0f), glm::vec3(-1.0f, -1.0f, -1.0f));  
+            view  = cam.getViewMatrix();
+            projection = glm::perspective(glm::radians(45.0f), (float)win.width() / (float)win.height(), 0.1f, 50.0f);
+            
+            shp->setUniform("model", (model));
+            shp->setUniform("view", (view));
+            shp->setUniform("projection", (projection));
+            shp->setUniform("usesTexture", true);
+            shp->setUniform("color", glm::vec4(1.0f,1.0f,1.0f,1.0f));
+            
+            br.draw();
+        }
 
         if(auto err = glGetError() != GL_NO_ERROR)std::cout<<err<<std::endl;
 
