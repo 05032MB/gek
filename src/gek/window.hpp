@@ -74,7 +74,25 @@ class window
         this->w = w;
         this->h = h;
 
+        glfwSetWindowUserPointer(win.get(), reinterpret_cast<void *>(this));
+        glViewport(0, 0, w, h);
+        glfwSetFramebufferSizeCallback(win.get(), resizeCallback);
+
         return win.get();
+    }
+
+    static void resizeCallback(GLFWwindow* gwin, int width, int height)
+    {
+        window * handler = reinterpret_cast<window *>(glfwGetWindowUserPointer(gwin));
+
+        if(handler == nullptr)
+        {
+            throw new failExcept("Resize callback epic fail");
+        }
+
+        handler->w = width;
+        handler->h = height;
+        glViewport(0, 0, width, height);
     }
 
     const auto width() const

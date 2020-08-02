@@ -18,11 +18,6 @@
 
 using namespace GEK;
 
-void resizeWindowCb(GLFWwindow* window, int width, int height)
-{
-    glViewport(0, 0, width, height);
-}  
-
 void processInput(GLFWwindow* window)
 {
     if(glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
@@ -36,15 +31,9 @@ int main()
     GEK::initGLFW();
 
     window win;
-
     win.hint(GLFW_CONTEXT_VERSION_MAJOR, 3, GLFW_CONTEXT_VERSION_MINOR, 3, GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-
-    win.createWindow(800, 600, "pdoomu");
-
+    win.createWindow(800, 600, "assteroids");
     win.setCurrent();
-    glViewport(0, 0, 800, 600);
-
-    glfwSetFramebufferSizeCallback(win(), resizeWindowCb);
 
     GEK::initGLEW();
 
@@ -56,9 +45,6 @@ int main()
     auto sha3D = std::make_shared<shader>("src/shaderz/vertex/vertex3d.glsl", GL_VERTEX_SHADER);
 
     try{
-        
-        sha3D->createShader();
-
         shp->enslaveShader( sha3D,
                           std::make_shared<shader>("src/shaderz/fragment/fragment.glsl", GL_FRAGMENT_SHADER));
 
@@ -76,7 +62,7 @@ int main()
     tex.createTexture();
 
 //////////
-glEnable(GL_DEPTH_TEST);  
+    glEnable(GL_DEPTH_TEST);  
     while(!glfwWindowShouldClose(win()))
     {
         glm::mat4 model         = glm::mat4(1.0f); // make sure to initialize matrix to identity matrix first
@@ -84,13 +70,13 @@ glEnable(GL_DEPTH_TEST);
         glm::mat4 projection    = glm::mat4(1.0f);
         //model = glm::rotate(model, glm::radians(-55.0f), glm::vec3(1.0f, 0.0f, 0.0f));
         model = glm::rotate(model, (float)glfwGetTime() * glm::radians(50.0f), glm::vec3(0.5f, 1.0f, 0.0f));  
-        view  = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
-        projection = glm::perspective(glm::radians(45.0f), (float)800 / (float)600, 0.1f, 50.0f);
+        view  = glm::translate(view, glm::vec3(0.0f, 1.0f, -10.0f));
+        projection = glm::perspective(glm::radians(45.0f), (float)win.width() / (float)win.height(), 0.1f, 50.0f);
 
         processInput(win());
 
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         tex.use();
         
@@ -106,8 +92,6 @@ glEnable(GL_DEPTH_TEST);
 
         glfwSwapBuffers(win());
         glfwPollEvents();
-
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     }
 
     }catch(failExcept *e)
