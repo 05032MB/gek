@@ -5,11 +5,12 @@
 #include <glm/gtc/matrix_transform.hpp>
 
 #include <gek/except.hpp>
+#include <gek/interfacez/icamera.hpp>
 
 namespace GEK
 {
 
-class camera
+class camera : public iCamera
 {
     glm::vec3 position, antidirection, positivx, up, absoluteUp;
 

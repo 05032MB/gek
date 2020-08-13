@@ -15,13 +15,15 @@
 #include <gek/window.hpp>
 #include <gek/transform.hpp>
 #include <gek/texture.hpp>
-#include <gek/camera.hpp>
+#include <gek/cameraz/cameras.hpp>
 
 using namespace GEK;
 
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
-camera cam({0,0,3});
+kwaCamera cam({0,0,8});
+
+#define camera kwaCamera
 
 void processInput(GLFWwindow* window)
 {
@@ -52,7 +54,42 @@ void processInput(GLFWwindow* window)
         cam.moveWithKbd(camera::movement::yawups, deltaTime);
     if (glfwGetKey(window, GLFW_KEY_L) == GLFW_PRESS)
         cam.moveWithKbd(camera::movement::yawdowns, deltaTime);
+
+    /*if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
+        cam.moveWithKbd(camera::movement::rollups, deltaTime);
+    if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)
+        cam.moveWithKbd(camera::movement::rolldowns, deltaTime);*/
 }
+
+#undef camera
+
+void processMouse(GLFWwindow* window)
+{
+    double x, y;
+    glfwGetCursorPos(window, &x, &y);
+
+    float xoffset = x;
+    float yoffset = y; 
+
+    xoffset+=1;
+    yoffset+=1;
+
+    xoffset = log10(xoffset);
+    yoffset = log10(yoffset);
+
+    if(x < 400 + 100 && x > 400 - 100)xoffset = 0;
+    if(y < 300 + 100 && y > 300 - 100)yoffset = 0;
+
+    if(x < 400 - 100)xoffset *= -1;
+    if(y < 400 - 100)yoffset *= -1;
+
+    if(isnan(xoffset) || isinf(xoffset))xoffset = 0;
+    if(isnan(yoffset) || isinf(yoffset))yoffset = 0;
+
+    //std::cout<<"Mysz na"<<x<<" "<<y<<"off "<<xoffset<<" "<<yoffset<<std::endl;
+
+    cam.moveWithMouse(xoffset, -yoffset);
+}  
 
 int main()
 {
@@ -110,18 +147,20 @@ int main()
         glm::mat4 projection    = glm::mat4(1.0f);
 
         processInput(win());
+        processMouse(win());
+        //glfwSetCursorPosCallback(win(), processMouse);  
 
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         tex.use();
 
-        for (unsigned int i = 0; i < 10; i++) 
+        for (unsigned int i = 0; i < 2; i++) 
         {
             model = glm::translate(model, cubePositions[i]);
             //model = glm::rotate(model, (float)glfwGetTime() * glm::radians(50.0f), glm::vec3(-1.0f, -1.0f, -1.0f));  
             view  = cam.getViewMatrix();
-            projection = glm::perspective(glm::radians(45.0f), (float)win.width() / (float)win.height(), 0.1f, 50.0f);
+            projection = glm::perspective(glm::radians(45.0f), (float)win.width() / (float)win.height(), 0.1f, cam.zoom);
             
             shp->setUniform("model", (model));
             shp->setUniform("view", (view));
@@ -138,9 +177,9 @@ int main()
         glfwPollEvents();
     }
 
-    }catch(failExcept *e)
+    }catch(except *e)
     {
-        std::cout<<e->what<<std::endl;
+        std::cout<<"[ERROR]: "<<e->what<<std::endl;
         exit(2);
     }
 
