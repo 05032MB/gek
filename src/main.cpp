@@ -21,9 +21,11 @@ using namespace GEK;
 
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
-kwaCamera cam({0,0,8});
 
-#define camera kwaCamera
+window win;
+camera cam({0,0,8});
+
+//#define camera kwaCamera
 
 void processInput(GLFWwindow* window)
 {
@@ -77,11 +79,11 @@ void processMouse(GLFWwindow* window)
     xoffset = log10(xoffset);
     yoffset = log10(yoffset);
 
-    if(x < 400 + 100 && x > 400 - 100)xoffset = 0;
-    if(y < 300 + 100 && y > 300 - 100)yoffset = 0;
+    if(x < win.width()/2 + 100 && x > win.width()/2 - 100)xoffset = 0;
+    if(y < win.height()/2 + 100 && y > win.height()/2 - 100)yoffset = 0;
 
-    if(x < 400 - 100)xoffset *= -1;
-    if(y < 400 - 100)yoffset *= -1;
+    if(x < win.width()/2 - 100)xoffset *= -1;
+    if(y < win.height()/2 - 100)yoffset *= -1;
 
     if(isnan(xoffset) || isinf(xoffset))xoffset = 0;
     if(isnan(yoffset) || isinf(yoffset))yoffset = 0;
@@ -95,7 +97,6 @@ int main()
 {
     GEK::initGLFW();
 
-    window win;
     win.hint(GLFW_CONTEXT_VERSION_MAJOR, 3, GLFW_CONTEXT_VERSION_MINOR, 3, GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     win.createWindow(800, 600, "assteroids");
     win.setCurrent();

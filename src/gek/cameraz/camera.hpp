@@ -16,8 +16,6 @@ class camera : public iCamera
 
     float yaw, pitch; //nie czuje sie na siłach na kwaterniony
 
-    float _zoom{45.0f};
-
     void updateCameraVectors()
     {
         glm::vec3 antidirection;
@@ -32,7 +30,9 @@ class camera : public iCamera
 
     public:
 
-    float cameraSpeed{1.0f}, eoffset{30}; //szybkość kamery WASD i 'rolli'
+    float cameraSpeed{1.0f}, eoffset{30}, mouseSensitivity{0.3f};; //szybkość kamery WASD i 'rolli'
+
+    float zoom{45.0f};
 
     enum movement
     {
@@ -109,7 +109,17 @@ class camera : public iCamera
         updateCameraVectors();
     }
 
-    void zoom(float sc)
+    void moveWithMouse(float xoffset, float yoffset)
+    {
+        xoffset *= mouseSensitivity;
+        yoffset *= mouseSensitivity;
+
+        yaw += xoffset;
+        pitch += yoffset;
+        updateCameraVectors();
+    }
+
+    void zoomWithMouse(float sc)
     {
         //XXXX TODO
         assert(1 == 0);
