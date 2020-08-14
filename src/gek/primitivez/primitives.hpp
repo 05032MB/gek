@@ -5,5 +5,6 @@
 #include "triangle.hpp"
 #include "rectangle.hpp"
 #include "cube.hpp"
+#include "objPrimitive.hpp"
 
 #endif

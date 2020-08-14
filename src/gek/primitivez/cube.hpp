@@ -105,7 +105,7 @@ class cube : public primitive
     void draw() override
     {
         glBindVertexArray(vao);
-        glDrawArrays(GL_TRIANGLES, 0, 36); 
+        glDrawArrays(GL_TRIANGLES, 0, this->vertices.size() / 4); 
     }
 };
 
