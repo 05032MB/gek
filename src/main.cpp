@@ -16,16 +16,14 @@
 #include <gek/transform.hpp>
 #include <gek/texture.hpp>
 #include <gek/cameraz/cameras.hpp>
+#include <gek/objModel.hpp>
+#include <gek/simpleClock.hpp>
 
 using namespace GEK;
 
-float deltaTime = 0.0f;
-float lastFrame = 0.0f;
-
 window win;
 camera cam({0,0,8});
-
-//#define camera kwaCamera
+simpleClock cl;
 
 void processInput(GLFWwindow* window)
 {
@@ -33,6 +31,8 @@ void processInput(GLFWwindow* window)
     {
         glfwSetWindowShouldClose(window, true);
     }
+
+    auto deltaTime = cl.getDelta();
 
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
         cam.moveWithKbd(camera::movement::forwards, deltaTime);
@@ -63,8 +63,6 @@ void processInput(GLFWwindow* window)
         cam.moveWithKbd(camera::movement::rolldowns, deltaTime);*/
 }
 
-#undef camera
-
 void processMouse(GLFWwindow* window)
 {
     double x, y;
@@ -88,9 +86,7 @@ void processMouse(GLFWwindow* window)
     if(isnan(xoffset) || isinf(xoffset))xoffset = 0;
     if(isnan(yoffset) || isinf(yoffset))yoffset = 0;
 
-    //std::cout<<"Mysz na"<<x<<" "<<y<<"off "<<xoffset<<" "<<yoffset<<std::endl;
-
-    cam.moveWithMouse(xoffset, -yoffset);
+    //cam.moveWithMouse(xoffset, -yoffset);
 }  
 
 int main()
@@ -119,14 +115,19 @@ int main()
 
         shp->activate();
 
-    cube br;
-    br.bind();
-
     shp->activate();
 
-    texture tex("../Downloads/wall.jpg");
-    tex.createTexture();
+    texture tex("../Downloads/Andorian (1).png", false);
+    texture tex2("../Downloads/diffuse.jpg", false);
 
+    std::cout<<"-----"<<std::endl;
+    objPrimitive pr(/*"tinyobjloader/models/cube.obj"*/"../Downloads/Quarren Coyote Ship.obj", "../Downloads/"/*"tinyobjloader/models/"*/, 0.01);
+    objPrimitive zr(/*"tinyobjloader/models/cube.obj"*/"../Downloads/backpack.obj", "../Downloads/"/*"tinyobjloader/models/"*/, 1);
+    std::cout<<"#####"<<std::endl;
+    pr.bind();
+    zr.bind();
+    tex.createTexture();
+    tex2.createTexture();
     //camera cam;
 
     glm::vec3 cubePositions[] = {
@@ -135,13 +136,12 @@ int main()
     };
 
 //////////
-    glEnable(GL_DEPTH_TEST);  
-    while(!glfwWindowShouldClose(win()))
+    win.enableZBuffer(); 
+    win.setClearScreenColor(0.2f, 0.3f, 0.3f, 1.0f);
+    while(!win.shouldClose())
     {
 
-        float currentFrame = glfwGetTime();
-        deltaTime = currentFrame - lastFrame;
-        lastFrame = currentFrame;
+        cl.tick();
 
         glm::mat4 model         = glm::mat4(1.0f);
         glm::mat4 view          = glm::mat4(1.0f);
@@ -149,16 +149,14 @@ int main()
 
         processInput(win());
         processMouse(win());
-        //glfwSetCursorPosCallback(win(), processMouse);  
 
-        glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        win.clearScreen();
+
+        //cam.cameraSpeed = 17;
 
         tex.use();
 
-        for (unsigned int i = 0; i < 2; i++) 
-        {
-            model = glm::translate(model, cubePositions[i]);
+            model = glm::translate(model, cubePositions[1]);
             //model = glm::rotate(model, (float)glfwGetTime() * glm::radians(50.0f), glm::vec3(-1.0f, -1.0f, -1.0f));  
             view  = cam.getViewMatrix();
             projection = glm::perspective(glm::radians(45.0f), (float)win.width() / (float)win.height(), 0.1f, cam.zoom);
@@ -169,18 +167,34 @@ int main()
             shp->setUniform("usesTexture", true);
             shp->setUniform("color", glm::vec4(1.0f,1.0f,1.0f,1.0f));
             
-            br.draw();
-        }
+        pr.draw();
+
+        tex2.use();
+
+            model = glm::translate(model, cubePositions[0]);
+            cubePositions[0][1] += sin(glfwGetTime()) * 0.0001;
+            model = glm::rotate(model, (float)glfwGetTime() * glm::radians(50.0f), glm::vec3(-1.0f, -1.0f, -1.0f));  
+            view  = cam.getViewMatrix();
+            projection = glm::perspective(glm::radians(45.0f), (float)win.width() / (float)win.height(), 0.1f, cam.zoom);
+            
+            shp->setUniform("model", (model));
+            shp->setUniform("view", (view));
+            shp->setUniform("projection", (projection));
+            shp->setUniform("usesTexture", true);
+            shp->setUniform("color", glm::vec4(1.0f,1.0f,1.0f,1.0f));
+
+        zr.draw();
 
         if(auto err = glGetError() != GL_NO_ERROR)std::cout<<err<<std::endl;
 
-        glfwSwapBuffers(win());
-        glfwPollEvents();
+        win.swapBuffers();
+        win.pollEvents();
     }
 
     }catch(except *e)
     {
-        std::cout<<"[ERROR]: "<<e->what<<std::endl;
+        std::cout<<"[GEK ERROR]: "<<e->what<<std::endl;
+        glfwTerminate();
         exit(2);
     }
 

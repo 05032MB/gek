@@ -22,6 +22,7 @@ class window
 
     std::unique_ptr<GLFWwindow, GLFWwinDestroyer> win;
     int w, h;
+    bool zBufferActive{false};
 
     void hint()
     {}
@@ -93,6 +94,37 @@ class window
         handler->w = width;
         handler->h = height;
         glViewport(0, 0, width, height);
+    }
+
+    bool shouldClose()
+    {
+        return glfwWindowShouldClose(win.get());
+    }
+
+    void enableZBuffer()
+    {
+        glEnable(GL_DEPTH_TEST); 
+        zBufferActive = true;
+    }
+
+    void clearScreen()
+    {
+        glClear(GL_COLOR_BUFFER_BIT | (zBufferActive ? GL_DEPTH_BUFFER_BIT : 0) );
+    }
+
+    void setClearScreenColor(float r, float g, float b, float al)
+    {
+        glClearColor(r, g, b, al);
+    }
+
+    void swapBuffers()
+    {
+        glfwSwapBuffers(win.get());
+    }
+
+    void pollEvents()
+    {
+        glfwPollEvents();
     }
 
     const auto width() const
