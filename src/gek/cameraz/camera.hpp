@@ -10,7 +10,7 @@
 namespace GEK
 {
 
-class camera : public iCamera
+class camera : public iCameraStandardOps
 {
     glm::vec3 position, antidirection, positivx, up, absoluteUp;
 
@@ -30,14 +30,9 @@ class camera : public iCamera
 
     public:
 
-    float cameraSpeed{1.0f}, eoffset{30}, mouseSensitivity{0.3f};; //szybkość kamery WASD i 'rolli'
+    float cameraSpeed{1.0f}, eoffset{30}, mouseSensitivity{0.3f}; //szybkość kamery WASD i 'rolli'
 
     float zoom{45.0f};
-
-    enum movement
-    {
-        forwards, backwards, lefts, rights, ups, downs, pitchups, pitchdowns, yawups, yawdowns //todo roll
-    };
 
     camera(glm::vec3 position = {0.0f, 0.0f, 0.0f}, glm::vec3 up = {0.0f, 1.0f, 0.0f}, float yaw = -90, float pitch = 0)
     {
@@ -49,13 +44,13 @@ class camera : public iCamera
         updateCameraVectors();
     }
 
-    glm::mat4 getViewMatrix()
+    glm::mat4 getViewMatrix() override
     {
         //kamera, cel, góra
         return glm::lookAt(position, position + antidirection, up);
     }
 
-    void moveWithKbd(movement dir, float deltaTime)
+    void moveWithKbd(movement dir, float deltaTime) override
     {
         float velocity = cameraSpeed * deltaTime;
 
@@ -109,7 +104,7 @@ class camera : public iCamera
         updateCameraVectors();
     }
 
-    void moveWithMouse(float xoffset, float yoffset)
+    void moveWithMouse(float xoffset, float yoffset) override
     {
         xoffset *= mouseSensitivity;
         yoffset *= mouseSensitivity;

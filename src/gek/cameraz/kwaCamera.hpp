@@ -10,7 +10,7 @@
 namespace GEK
 {
 
-class kwaCamera : public iCamera
+class kwaCamera : public iCameraStandardOps
 {
     glm::vec3 position{0.0f, 0.0f, 0.0f}, absoluteUp{0, 1, 0}, right, left, front;
     glm::quat direction{0,0,0,-1}; //jednak kwaterniony
@@ -53,11 +53,6 @@ class kwaCamera : public iCamera
     float cameraSpeed{1.0f}, eoffset{30}, mouseSensitivity{0.3f}; //szybkość kamery WASD i 'rolli'
     float zoom{45.0f};
 
-    enum movement
-    {
-        forwards, backwards, lefts, rights, ups, downs, pitchups, pitchdowns, yawups, yawdowns, rollups, rolldowns,
-    };
-
     kwaCamera(glm::vec3 position = {0.0f, 0.0f, 0.0f})
     {
         this->position = position;
@@ -71,7 +66,7 @@ class kwaCamera : public iCamera
         updateCameraVectors();
     }
 
-    glm::mat4 getViewMatrix()
+    glm::mat4 getViewMatrix() override
     {
         glm::quat antidir = glm::conjugate(direction); //zrób kwa z kier patrzenia
         glm::mat4 rotate = glm::mat4_cast(antidir); // zrób z kwa obrót (kwa -> mat)
@@ -81,7 +76,7 @@ class kwaCamera : public iCamera
         return rotate * translate; //nałóż trans POTEM obroc !!!KOLEJNOŚĆ MA ZNACZENIE!!!
     }
 
-    void moveWithKbd(movement dir, float deltaTime)
+    void moveWithKbd(movement dir, float deltaTime) override
     {
         float velocity = cameraSpeed * deltaTime;
 
@@ -147,7 +142,7 @@ class kwaCamera : public iCamera
         updateCameraVectors();
     }
 
-    void moveWithMouse(float xoffset, float yoffset)
+    void moveWithMouse(float xoffset, float yoffset) override
     {
         xoffset *= mouseSensitivity;
         yoffset *= mouseSensitivity;
