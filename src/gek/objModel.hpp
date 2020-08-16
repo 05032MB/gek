@@ -2,17 +2,34 @@
 #define GEK_OBJMODEL_HPP
 
 #include <gek/except.hpp>
+#include <gek/misc.hpp>
+#include <glm/glm.hpp>
+#include <vector>
+#include <algorithm>
 
 #define TINYOBJLOADER_IMPLEMENTATION
 #include <tiny_obj_loader.h>
 
 namespace GEK
 {
+/*
+Chwilowo jedyna funkcja to obliczanie wektorów normalnych, jeśli nie są podane w modelu.
+*/
+enum overrideObjLoad
+{
+    CalcNormalsFlat = 1 << 0,   //"Flat" - oblicza tylko z jednej powierzchni (face). TODO "Smooth" - uśrednione z wielu granicznych powierzchni
+    NoColor     = 1 << 1,
+};
+
+#define CAN_LOAD_NORMALS !(overrideLoad & CalcNormalsFlat)
 
 /*
 Adapted from example on tinyObjLoader site
 */
-void loadObjFile(std::string inputfile, std::string materialDir, std::vector<float> *vertices, std::vector<float> *colors, std::vector<float> *normals, std::vector<float> *texcoords)
+void loadObjFile(std::string inputfile, std::string materialDir, 
+                 std::vector<float> *vertices, std::vector<float> *colors, std::vector<float> *normals, std::vector<float> *texcoords,
+                 unsigned int overrideLoad = 0
+                )
 {
     tinyobj::attrib_t attrib;
     std::vector<tinyobj::shape_t> shapes;
@@ -58,7 +75,7 @@ void loadObjFile(std::string inputfile, std::string materialDir, std::vector<flo
                 /*tinyobj::real_t nx = attrib.normals[3*idx.normal_index+0];
                 tinyobj::real_t ny = attrib.normals[3*idx.normal_index+1];
                 tinyobj::real_t nz = attrib.normals[3*idx.normal_index+2];*/
-                if(normals != nullptr)
+                if(CAN_LOAD_NORMALS && normals != nullptr)
                 {
                     normals->insert(normals->end(), attrib.normals.begin() + 3 * idx.normal_index, attrib.normals.begin() + 3 * idx.normal_index + 3);
                 }
@@ -73,18 +90,58 @@ void loadObjFile(std::string inputfile, std::string materialDir, std::vector<flo
                 // tinyobj::real_t red = attrib.colors[3*idx.vertex_index+0];
                 // tinyobj::real_t green = attrib.colors[3*idx.vertex_index+1];
                 // tinyobj::real_t blue = attrib.colors[3*idx.vertex_index+2];
-                if(colors != nullptr)
+                if(!!(overrideLoad & NoColor) && normals != nullptr)    //No colors
+                {
+                    std::vector<float> t(3, 1.0f);
+                    colors->insert(colors->end(), t.begin(), t.end());
+                }
+                else if(colors != nullptr)
                 {
                     colors->insert(colors->end(), attrib.colors.begin() + 3 * idx.vertex_index, attrib.colors.begin() + 3 * idx.vertex_index + 3);
                 }
             }
-                index_offset += fv;
+            index_offset += fv;
 
             // per-face material
             shapes[s].mesh.material_ids[f];
+
+            /*
+            Adapted from instructions here: https://support.microsoft.com/en-us/help/131130/how-to-set-the-current-normal-vector-in-an-opengl-application
+            Niedokładne oszacowanie wektora normalnego - obliczane per face, i wrzucane do wierzchołków. Nie wygląda bardzo źle.
+            Hańba temu kto nie dorzuca normalnych do swojego modelu.
+            */
+            if(!!(overrideLoad & CalcNormalsFlat) && normals != nullptr)
+            {
+                if(unlikely(fv != 3))
+                {
+                    throw new failExcept("Cannot calc flat normals for mesh with more than 3 vertices per shape.");
+                }
+                std::vector<float> extractor;
+                for(auto i = 1; i <= 9; i++)
+                {
+                    extractor.push_back( vertices->at(vertices->size() - i) );
+                }
+
+                glm::vec3 a(extractor[0], extractor[1], extractor[2]);
+                glm::vec3 b(extractor[3], extractor[4], extractor[5]);
+                glm::vec3 c(extractor[6], extractor[7], extractor[8]);
+
+                glm::vec3 planeNormal = glm::normalize(glm::cross(a - b, c - b));
+
+                for(short i = 0; i < 3; i++)
+                {
+                    normals->push_back(planeNormal.x);
+                    normals->push_back(planeNormal.y);
+                    normals->push_back(planeNormal.z);
+                }
+
+            }
+
         }
     }
 }
+
+#undef CAN_LOAD_NORMALS
 
 }
 

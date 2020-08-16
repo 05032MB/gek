@@ -11,7 +11,7 @@
 namespace GEK
 {
 
-class primitive : public iDrawable, public iHasTex, public iHasColors
+class primitive : public iDrawable, public iHasTex, public iHasColors, public iHasNormals
 {
     protected:
     unsigned int vao;

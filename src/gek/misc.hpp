@@ -5,6 +5,7 @@
 #include <GLFW/glfw3.h>
 
 #include <string>
+#include <vector>
 
 #include <gek/except.hpp>
 
@@ -54,6 +55,36 @@ namespace GEK
         }
 
     };
+
+    std::vector<float> approxNormals(const std::vector<float> &vertices, unsigned stride)
+    {
+        int off = vertices.size();
+        std::vector<float> normals;
+
+        while(off >= 9)
+        {
+            std::vector<float> extractor;
+            for(auto i = 1; i <= 9; i++)
+            {
+                extractor.push_back( vertices.at(off - i) );
+            }
+
+            glm::vec3 a(extractor[0], extractor[1], extractor[2]);
+            glm::vec3 b(extractor[3], extractor[4], extractor[5]);
+            glm::vec3 c(extractor[6], extractor[7], extractor[8]);
+
+            glm::vec3 planeNormal = glm::normalize(glm::cross(a - b, c - b));
+
+            for(short i = 0; i < 3; i++)
+            {
+                normals.push_back(planeNormal.x);
+                normals.push_back(planeNormal.y);
+                normals.push_back(planeNormal.z);
+            }
+            off -= stride;
+        }
+        return normals;
+    }
 
 }
 

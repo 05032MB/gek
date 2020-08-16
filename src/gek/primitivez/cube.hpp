@@ -2,6 +2,7 @@
 #define GEK_CUBE_HPP
 
 #include <gek/primitivez/primitive.hpp>
+#include <gek/misc.hpp>
 
 namespace GEK
 {
@@ -94,6 +95,9 @@ class cube : public primitive
             1.0f,1.0f, 0.0f,0.0f, 0.0f,1.0f,
             1.0f,1.0f, 1.0f,0.0f, 0.0f,0.0f,
          };
+
+         this->normals = approxNormals(this->vertices, 12); //XXXX Znaleźć normale
+         
          this->colors = std::vector((this->vertices.size() / 4) * 3, 1.0f);
     }
 
@@ -101,6 +105,7 @@ class cube : public primitive
     {
         this->primitive::bind(0, 3, 4, this->vertices, vVertices);
         this->primitive::bind(1, 2, 2, this->tex, vTex);
+        this->primitive::bind(2, 3, 3, this->normals, vNormals, false);
         this->primitive::bind(3, 3, 3, this->colors, vColors);
     }
 
