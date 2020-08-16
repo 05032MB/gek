@@ -50,6 +50,11 @@ class camera : public iCameraStandardOps
         return glm::lookAt(position, position + antidirection, up);
     }
 
+    glm::vec3 getPosition() override
+    {
+        return position;
+    }
+
     void moveWithKbd(movement dir, float deltaTime) override
     {
         float velocity = cameraSpeed * deltaTime;

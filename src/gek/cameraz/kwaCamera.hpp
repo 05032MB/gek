@@ -76,6 +76,11 @@ class kwaCamera : public iCameraStandardOps
         return rotate * translate; //nałóż trans POTEM obroc !!!KOLEJNOŚĆ MA ZNACZENIE!!!
     }
 
+    glm::vec3 getPosition() override
+    {
+        return position;
+    }
+
     void moveWithKbd(movement dir, float deltaTime) override
     {
         float velocity = cameraSpeed * deltaTime;

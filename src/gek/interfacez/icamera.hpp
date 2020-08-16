@@ -7,6 +7,7 @@ namespace GEK
 struct iCamera
 {
     virtual glm::mat4 getViewMatrix() = 0;
+    virtual glm::vec3 getPosition() = 0;
 };
 
 struct iCameraCanMoveWithKbd : public iCamera

@@ -104,11 +104,11 @@ int main()
 //////////
     auto shp = std::make_shared<shaderProgram>();
 
-    auto sha3D = std::make_shared<shader>("src/shaderz/vertex/vertex3d.glsl", GL_VERTEX_SHADER);
+    auto sha3D = std::make_shared<shader>("src/shaderz/vertex/vertex3dWithLightning.glsl", GL_VERTEX_SHADER);
 
     try{
         shp->enslaveShader( sha3D,
-                          std::make_shared<shader>("src/shaderz/fragment/fragment.glsl", GL_FRAGMENT_SHADER));
+                          std::make_shared<shader>("src/shaderz/fragment/fragmentWithLightning.glsl", GL_FRAGMENT_SHADER));
 
         shp->compile();
         shp->releaseShaders();
@@ -117,22 +117,28 @@ int main()
 
     shp->activate();
 
-    texture tex("../Downloads/Andorian (1).png", false);
+    texture tex("../Downloads/Andorian (1).png", true);
     texture tex2("../Downloads/diffuse.jpg", false);
+    texture tex3("../Downloads/Asteroid/10464_Asteroid_v1_diffuse.jpg", true);
 
     std::cout<<"-----"<<std::endl;
-    objPrimitive pr(/*"tinyobjloader/models/cube.obj"*/"../Downloads/Quarren Coyote Ship.obj", "../Downloads/"/*"tinyobjloader/models/"*/, 0.01);
+    objPrimitive pr(/*"tinyobjloader/models/cube.obj"*/"../Downloads/Quarren Coyote Ship.obj", "../Downloads/"/*"tinyobjloader/models/"*/, 0.01, 1 << 0);
     objPrimitive zr(/*"tinyobjloader/models/cube.obj"*/"../Downloads/backpack.obj", "../Downloads/"/*"tinyobjloader/models/"*/, 1);
     std::cout<<"#####"<<std::endl;
     pr.bind();
     zr.bind();
     tex.createTexture();
     tex2.createTexture();
+    tex3.createTexture();
     //camera cam;
+
+    objPrimitive cu("../Downloads/Asteroid/10464_Asteroid_v1_Iterations-2.obj", "../Downloads/Asteroid", 0.01);
+    cu.bind();
 
     glm::vec3 cubePositions[] = {
         glm::vec3( 0.0f,  0.0f,  0.0f),
         glm::vec3( 1.0f,  0.5f,  0.7f),
+        glm::vec3( 5.0f,  5.5f,  -20.0f),
     };
 
 //////////
@@ -152,40 +158,54 @@ int main()
 
         win.clearScreen();
 
+        view  = cam.getViewMatrix();
+        projection = glm::perspective(glm::radians(45.0f), (float)win.width() / (float)win.height(), 0.1f, cam.zoom);
+        shp->setUniform("actCameraPos", cam.getPosition());
         //cam.cameraSpeed = 17;
+
+        //shp->setUniform("ambientLight", 0.25f);
 
         tex.use();
 
             model = glm::translate(model, cubePositions[1]);
+            //model = glm::rotate(model, (float)glfwGetTime() * glm::radians(50.0f), glm::vec3(-1.0f, -1.0f, -1.0f));
             //model = glm::rotate(model, (float)glfwGetTime() * glm::radians(50.0f), glm::vec3(-1.0f, -1.0f, -1.0f));  
-            view  = cam.getViewMatrix();
-            projection = glm::perspective(glm::radians(45.0f), (float)win.width() / (float)win.height(), 0.1f, cam.zoom);
             
             shp->setUniform("model", (model));
             shp->setUniform("view", (view));
             shp->setUniform("projection", (projection));
-            shp->setUniform("usesTexture", true);
-            shp->setUniform("color", glm::vec4(1.0f,1.0f,1.0f,1.0f));
+            //shp->setUniform("usesTexture", true);
+            shp->setUniform("lightColor", glm::vec3(1.0f,1.0f,1.0f));
             
         pr.draw();
 
         tex2.use();
 
             model = glm::translate(model, cubePositions[0]);
-            cubePositions[0][1] += sin(glfwGetTime()) * 0.0001;
-            model = glm::rotate(model, (float)glfwGetTime() * glm::radians(50.0f), glm::vec3(-1.0f, -1.0f, -1.0f));  
-            view  = cam.getViewMatrix();
-            projection = glm::perspective(glm::radians(45.0f), (float)win.width() / (float)win.height(), 0.1f, cam.zoom);
+            //cubePositions[0][1] += sin(glfwGetTime()) * 0.0001;
+            //model = glm::rotate(model, (float)glfwGetTime() * glm::radians(50.0f), glm::vec3(-1.0f, -1.0f, -1.0f));  
             
             shp->setUniform("model", (model));
             shp->setUniform("view", (view));
             shp->setUniform("projection", (projection));
-            shp->setUniform("usesTexture", true);
-            shp->setUniform("color", glm::vec4(1.0f,1.0f,1.0f,1.0f));
+            //shp->setUniform("usesTexture", true);
+            shp->setUniform("lightColor", glm::vec3(1.0f,1.0f,1.0f));
 
         zr.draw();
 
-        if(auto err = glGetError() != GL_NO_ERROR)std::cout<<err<<std::endl;
+        tex3.use();
+            model = glm::translate(glm::mat4(1.0f), cubePositions[2]);
+            //model = glm::rotate(model, (float)glfwGetTime() * glm::radians(50.0f), glm::vec3(-1.0f, -1.0f, -1.0f));
+            
+            shp->setUniform("model", (model));
+            shp->setUniform("view", (view));
+            shp->setUniform("projection", (projection));
+            //shp->setUniform("usesTexture", true);
+            shp->setUniform("lightColor", glm::vec3(1.0f,1.0f,1.0f));
+
+        cu.draw();
+
+        if(auto err = glGetError() != GL_NO_ERROR)std::cout<<"[GL Error]: "<<err<<std::endl;
 
         win.swapBuffers();
         win.pollEvents();
