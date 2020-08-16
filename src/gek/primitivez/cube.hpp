@@ -94,12 +94,14 @@ class cube : public primitive
             1.0f,1.0f, 0.0f,0.0f, 0.0f,1.0f,
             1.0f,1.0f, 1.0f,0.0f, 0.0f,0.0f,
          };
+         this->colors = std::vector((this->vertices.size() / 4) * 3, 1.0f);
     }
 
     void bind() override
     {
         this->primitive::bind(0, 3, 4, this->vertices, vVertices);
         this->primitive::bind(1, 2, 2, this->tex, vTex);
+        this->primitive::bind(3, 3, 3, this->colors, vColors);
     }
 
     void draw() override

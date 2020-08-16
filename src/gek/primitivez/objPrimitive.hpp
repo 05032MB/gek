@@ -13,7 +13,7 @@ class objPrimitive : public customPrimitive
 
     objPrimitive(std::string name, std::string workingDir, float scale=1.0f)
     {
-        loadObjFile(name, workingDir, &this->vertices, nullptr, nullptr, &this->tex);
+        loadObjFile(name, workingDir, &this->vertices, &this->colors, nullptr, &this->tex);
 
         if(scale != 1.0f)
         {
@@ -28,6 +28,7 @@ class objPrimitive : public customPrimitive
     {
         this->primitive::bind(0, 3, 3, this->vertices, vVertices, false);
         this->primitive::bind(1, 2, 2, this->tex, vTex, false);
+        this->primitive::bind(3, 3, 3, this->colors, vColors, false);
     }
 
     void draw() override

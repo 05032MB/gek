@@ -23,12 +23,16 @@ class triangle : public primitive
          1.0f, 0.0f,  // lower-right corner
          0.5f, 1.0f   // top-center corner
         };
+
+        this->colors = std::vector((this->vertices.size() / 4) * 3, 1.0f);
+
     }
 
     void bind() override
     {
         this->primitive::bind(0, 3, 3, this->vertices, vVertices);
         this->primitive::bind(1, 2, 2, this->tex, vTex);
+        this->primitive::bind(3, 3, 3, this->colors, vColors);
     }
 
     void draw() override
