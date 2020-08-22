@@ -1,11 +1,20 @@
-LIBZ= -lGL -lglfw -lGLEW
+LIBZ=
 CXX= g++
 SRCZ= src/main.cpp
 HDRZ=
-TRGT= pdoomu.app
+INC= -I stb/ -I tinyobjloader/ -I src/
+TRGT= gek.app
+CUSTODEPMBUILD=
+
+ifeq ($(OS),Windows_NT)
+CUSTODEPMBUILD+= -D GLEW_STATIC -I glDeps/glew/include -I glDeps/glfw/include -I glDeps/glm -L glDeps/glfw/src -L glDeps/glew/lib
+LIBZ+= -lglfw3 -lglew32 -lgdi32 -lopengl32
+else
+LIBZ+= -lGL -lglfw -lGLEW
+endif
 
 all: $(SRCZ) $(HDRZ)
-	$(CXX) $(SRCZ) -o $(TRGT) -std=c++17 -g -I stb/ -I tinyobjloader/ -I src/ $(LIBZ)
+	$(CXX) $(SRCZ) -o $(TRGT) -std=c++17 -g $(INC) $(CUSTODEPMBUILD) $(LIBZ)
 
 run: all
 	./$(TRGT)
