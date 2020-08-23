@@ -26,14 +26,14 @@ void main()
    
     //znormalizowane normale i kierunek padania światła
     vec3 normobjnorm = normalize(objNormals);
-    vec3 lightDir = (staticLightPos - worldPos);
+    vec3 lightDir = normalize(staticLightPos - worldPos);
     //diffuse
     float _diffuse = max(dot(normobjnorm, lightDir), 0);
     vec3 diffuse = _diffuse * lightColor;
     //////////
 
     //specular
-    float specularLightStrength = specularLight > 0 + EPS ? specularLight : 0.3;
+    float specularLightStrength = specularLight > 0 + EPS ? specularLight : 0.7;
 
     vec3 viewDir = normalize(actCameraPos - worldPos); //skąd patrzę
     vec3 reflectDir = reflect(-lightDir, normobjnorm);  //odbicie światła

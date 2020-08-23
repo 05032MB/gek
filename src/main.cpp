@@ -22,7 +22,7 @@
 using namespace GEK;
 
 window win;
-camera cam({0,0,8});
+kwaCamera cam({0,0,8});
 simpleClock cl;
 
 void processInput(GLFWwindow* window)
@@ -161,6 +161,7 @@ int main()
         view  = cam.getViewMatrix();
         projection = glm::perspective(glm::radians(45.0f), (float)win.width() / (float)win.height(), 0.1f, cam.zoom);
         shp->setUniform("actCameraPos", cam.getPosition());
+        shp->setUniform("staticLightPos", glm::vec3(10,0,0));
         //cam.cameraSpeed = 17;
 
         //shp->setUniform("ambientLight", 0.25f);
