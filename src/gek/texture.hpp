@@ -59,8 +59,9 @@ class texture : iCullable
         glDeleteTextures(1, &texId);
     }
 
-    void bindTex()
+    void bindTex(unsigned short numtex = 0)
     {
+        glActiveTexture(GL_TEXTURE0 + numtex);
         glBindTexture(GL_TEXTURE_2D, texId);
     }
 
@@ -93,9 +94,11 @@ class texture : iCullable
         stbiData.reset();
     }
 
-    void use()
+    enum texType {solo = 0, diffuse = 0, specular = 1, normal = 2};
+
+    void use(texType as = solo)
     {
-        bindTex();
+        bindTex(as);
     }
 
     void cull() override
