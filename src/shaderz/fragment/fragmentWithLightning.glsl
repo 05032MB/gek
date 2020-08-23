@@ -7,7 +7,10 @@ in vec3 worldPos;
 
 out vec4 fragColor;
 
-uniform sampler2D texSampler;
+uniform sampler2D diffuseTex;
+uniform sampler2D specularTex;
+uniform bool hasSpecularTex;
+
 uniform vec3 lightColor;
 uniform float ambientLight;
 uniform vec3 staticLightPos;
@@ -21,7 +24,7 @@ void main()
 {
     ///ambient
     float ambientLightStrength = ambientLight > 0 + EPS ? ambientLight : 0.1;
-    vec3 ambientL = ambientLightStrength * lightColor;
+    vec3 ambientL = ambientLightStrength * lightColor * texture(diffuseTex, texCoord).rgb;
     //////////
    
     //znormalizowane normale i kierunek padania światła
@@ -29,7 +32,7 @@ void main()
     vec3 lightDir = normalize(staticLightPos - worldPos);
     //diffuse
     float _diffuse = max(dot(normobjnorm, lightDir), 0);
-    vec3 diffuse = _diffuse * lightColor;
+    vec3 diffuse = _diffuse * lightColor * texture(diffuseTex, texCoord).rgb;
     //////////
 
     //specular
@@ -39,8 +42,12 @@ void main()
     vec3 reflectDir = reflect(-lightDir, normobjnorm);  //odbicie światła
 
     float _specular = pow(max(dot(viewDir, reflectDir), 0.0), shininess > 0 ? shininess : 32);
-    vec3 specular = specularLightStrength * _specular * lightColor;  
+    vec3 specular = specularLightStrength * _specular * lightColor;
+    if(hasSpecularTex)
+    {
+        specular *= texture(specularTex, texCoord).rgb;
+    }
     //////////
 
-    fragColor = vec4(objColor * (ambientL + diffuse + specular), 1.0) * texture(texSampler, texCoord);
+    fragColor = vec4(objColor * (ambientL + diffuse + specular), 1.0);
 }
