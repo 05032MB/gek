@@ -2,3 +2,6 @@
 *.out
 *.app
 build/*
+glDeps/*
+*.exe
+*.dll
