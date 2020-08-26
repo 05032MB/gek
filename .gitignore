@@ -1,7 +1,10 @@
 *.o
 *.out
 *.app
+*.exe
 build/*
 glDeps/*
 *.exe
 *.dll
+media/*
+!media/.keep
