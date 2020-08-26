@@ -18,15 +18,14 @@
 #include <gek/cameraz/cameras.hpp>
 #include <gek/objModel.hpp>
 #include <gek/simpleClock.hpp>
+#include <gek/collisionSphere.hpp>
+#include <gek/object.hpp>
 
 using namespace GEK;
 
-window win;
-kwaCamera cam({0,0,8});
-simpleClock cl;
-
-void processInput(GLFWwindow* window)
+void processInput(window &win, iCameraStandardOps &cam, simpleClock &cl)
 {
+    auto window = win();
     if(glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
     {
         glfwSetWindowShouldClose(window, true);
@@ -57,16 +56,16 @@ void processInput(GLFWwindow* window)
     if (glfwGetKey(window, GLFW_KEY_L) == GLFW_PRESS)
         cam.moveWithKbd(camera::movement::yawdowns, deltaTime);
 
-    /*if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
+    if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
         cam.moveWithKbd(camera::movement::rollups, deltaTime);
     if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)
-        cam.moveWithKbd(camera::movement::rolldowns, deltaTime);*/
+        cam.moveWithKbd(camera::movement::rolldowns, deltaTime);
 }
 
-void processMouse(GLFWwindow* window)
+void processMouse(window &win, iCameraStandardOps &cam)
 {
     double x, y;
-    glfwGetCursorPos(window, &x, &y);
+    glfwGetCursorPos(win(), &x, &y);
 
     float xoffset = x;
     float yoffset = y; 
@@ -93,8 +92,10 @@ int main()
 {
     GEK::initGLFW();
 
+    window win;
+
     win.hint(GLFW_CONTEXT_VERSION_MAJOR, 3, GLFW_CONTEXT_VERSION_MINOR, 3, GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-    win.createWindow(800, 600, "assteroids");
+    win.createWindow(800, 600, "asteroids");
     win.setCurrent();
 
     GEK::initGLEW();
@@ -102,109 +103,135 @@ int main()
     errno = 0; //gLfw NiE usTaWia ErrNo aLe wYwoŁujE dUżO fUnkcJi poŚreDnicH
 
 //////////
+
+    kwaCamera cam({0,0,8});
+    simpleClock cl;
+
+    const unsigned numAst = 10;
+
+    try
+    {
+
     auto shp = std::make_shared<shaderProgram>();
-
-    auto sha3D = std::make_shared<shader>("src/shaderz/vertex/vertex3dWithLightning.glsl", GL_VERTEX_SHADER);
-
-    try{
-        shp->enslaveShader( sha3D,
-                          std::make_shared<shader>("src/shaderz/fragment/fragmentWithLightning.glsl", GL_FRAGMENT_SHADER));
-
-        shp->compile();
-        shp->releaseShaders();
-
-        shp->activate();
-
+    shp->enslaveShader(std::make_shared<shader>("src/shaderz/vertex/vertex3dWithLightning.glsl", GL_VERTEX_SHADER),
+                        std::make_shared<shader>("src/shaderz/fragment/fragmentWithLightning.glsl", GL_FRAGMENT_SHADER));
+    shp->compile();
+    shp->releaseShaders();
     shp->activate();
 
-    texture tex("../Downloads/Andorian (1).png", true);
-    texture tex2("../Downloads/diffuse.jpg", false);
-    texture tex3("../Downloads/Asteroid/10464_Asteroid_v1_diffuse.jpg", true);
+    object bakPak, asteroids[numAst], ship;
+
+    collisionSphere camSphere(cam.getPosition(), 1);
+    collisionSphere astSpheres[numAst] = {1}; //changeme
+
+    auto shiptex = std::make_shared<texture>("../Downloads/Andorian (1).png", true);
+    auto shiptexspec = std::make_shared<texture>("../Downloads/Andorian (4).png", true, texture::specular);
+    auto tex2 = std::make_shared<texture>("../Downloads/diffuse.jpg", false);
+    auto tex2spe = std::make_shared<texture>("../Downloads/baspecular.jpg", false, texture::specular);
+    auto asteroidtex = std::make_shared<texture>("../Downloads/Asteroid/10464_Asteroid_v1_diffuse.jpg", true);
 
     std::cout<<"-----"<<std::endl;
-    objPrimitive pr(/*"tinyobjloader/models/cube.obj"*/"../Downloads/Quarren Coyote Ship.obj", "../Downloads/"/*"tinyobjloader/models/"*/, 0.01, 1 << 0);
-    objPrimitive zr(/*"tinyobjloader/models/cube.obj"*/"../Downloads/backpack.obj", "../Downloads/"/*"tinyobjloader/models/"*/, 1);
+    auto shipmodel = std::make_shared<objPrimitive>("../Downloads/Quarren Coyote Ship.obj", "../Downloads/", 0.01, 1 << 0);
+    auto zr = std::make_shared<objPrimitive>(/*"tinyobjloader/models/cube.obj"*/"../Downloads/backpack.obj", "../Downloads/"/*"tinyobjloader/models/"*/, 1);
+    auto asteroidmodel = std::make_shared<objPrimitive>("../Downloads/Asteroid/10464_Asteroid_v1_Iterations-2.obj", "../Downloads/Asteroid", 0.008);
     std::cout<<"#####"<<std::endl;
-    pr.bind();
-    zr.bind();
-    tex.createTexture();
-    tex2.createTexture();
-    tex3.createTexture();
-    //camera cam;
 
-    objPrimitive cu("../Downloads/Asteroid/10464_Asteroid_v1_Iterations-2.obj", "../Downloads/Asteroid", 0.01);
-    cu.bind();
+    shipmodel->bind();
+    zr->bind();
+    asteroidmodel->bind();
+    shiptex->createTexture();
+    tex2->createTexture();
+    asteroidtex->createTexture();
+    tex2spe->createTexture();
 
-    glm::vec3 cubePositions[] = {
-        glm::vec3( 0.0f,  0.0f,  0.0f),
-        glm::vec3( 1.0f,  0.5f,  0.7f),
-        glm::vec3( 5.0f,  5.5f,  -20.0f),
-    };
+    bakPak.enslaveModel(zr);
+    bakPak.enslaveTex(tex2, tex2spe);
+
+    ship.enslaveModel(shipmodel);
+    ship.enslaveTex(shiptex, shiptexspec);
+
+    int basepos = 0;
+    for(auto f = 0; f < numAst; f++)
+    {
+        auto &i = asteroids[f];
+
+        i.enslaveModel(asteroidmodel);
+        i.enslaveTex(asteroidtex);
+        i.setPosition({basepos + rand() % 10, basepos + rand() % 10, basepos + rand() % 10 });
+        i.setRotationAngle(static_cast<object::whichAngle>(rand() % 3), rand() % 360);
+        astSpheres[f].updatePosition(i.getPosition());
+        basepos += rand() % 3 + 5;
+    }
+
+    bakPak.setPosition(glm::vec3( 0.0f,  0.0f,  0.0f));
+    bakPak.setRotationAngle(object::whichAngle::roll, 21);
 
 //////////
     win.enableZBuffer(); 
-    win.setClearScreenColor(0.2f, 0.3f, 0.3f, 1.0f);
+    win.setClearScreenColor(1.0f, 1.0f, 1.0f, 1.0f);
     while(!win.shouldClose())
     {
 
         cl.tick();
 
-        glm::mat4 model         = glm::mat4(1.0f);
         glm::mat4 view          = glm::mat4(1.0f);
         glm::mat4 projection    = glm::mat4(1.0f);
 
-        processInput(win());
-        processMouse(win());
+        processInput(win, cam, cl);
+        processMouse(win, cam);
 
         win.clearScreen();
 
         view  = cam.getViewMatrix();
-        projection = glm::perspective(glm::radians(45.0f), (float)win.width() / (float)win.height(), 0.1f, cam.zoom);
+        projection = glm::perspective(glm::radians(cam.zoom), (float)win.width() / (float)win.height(), 0.1f, 500.0f);
         shp->setUniform("actCameraPos", cam.getPosition());
         shp->setUniform("staticLightPos", glm::vec3(10,0,0));
-        //cam.cameraSpeed = 17;
+        shp->setUniform("view", (view));
+        shp->setUniform("projection", (projection));
 
-        //shp->setUniform("ambientLight", 0.25f);
+        camSphere.updatePosition(cam.getPosition());
 
-        tex.use();
+        ship.setPosition({0, 0, 0});
 
-            model = glm::translate(model, cubePositions[1]);
-            //model = glm::rotate(model, (float)glfwGetTime() * glm::radians(50.0f), glm::vec3(-1.0f, -1.0f, -1.0f));
+        glm::mat4 shipModelMat = glm::mat4(1.0f);
+        shipModelMat = glm::translate(shipModelMat, {0,0,0});
+        shp->setUniform("model", ship.getModelMatrix());
+        shp->setUniform("lightColor", glm::vec3(1.0f,1.0f,1.0f));
+
+        shp->setUniform("hasSpecularTex", true);
+        ship.draw();
+        shp->setUniform("hasSpecularTex", false);
+
             //model = glm::rotate(model, (float)glfwGetTime() * glm::radians(50.0f), glm::vec3(-1.0f, -1.0f, -1.0f));  
             
-            shp->setUniform("model", (model));
-            shp->setUniform("view", (view));
-            shp->setUniform("projection", (projection));
-            //shp->setUniform("usesTexture", true);
-            shp->setUniform("lightColor", glm::vec3(1.0f,1.0f,1.0f));
-            
-        pr.draw();
+        //test model
+        shp->setUniform("model", bakPak.getModelMatrix());
+        shp->setUniform("lightColor", glm::vec3(1.0f,1.0f,1.0f));
+        shp->setUniform("hasSpecularTex", true);
 
-        tex2.use();
+        bakPak.draw();
 
-            model = glm::translate(model, cubePositions[0]);
-            //cubePositions[0][1] += sin(glfwGetTime()) * 0.0001;
-            //model = glm::rotate(model, (float)glfwGetTime() * glm::radians(50.0f), glm::vec3(-1.0f, -1.0f, -1.0f));  
-            
-            shp->setUniform("model", (model));
-            shp->setUniform("view", (view));
-            shp->setUniform("projection", (projection));
-            //shp->setUniform("usesTexture", true);
+        shp->setUniform("hasSpecularTex", false);
+        /////
+
+        asteroidtex->use();
+
+        for (auto &i : asteroids)
+        {
+            shp->setUniform("model", i.getModelMatrix() );
             shp->setUniform("lightColor", glm::vec3(1.0f,1.0f,1.0f));
 
-        zr.draw();
+            i.draw();
+        }
 
-        tex3.use();
-            model = glm::translate(glm::mat4(1.0f), cubePositions[2]);
-            //model = glm::rotate(model, (float)glfwGetTime() * glm::radians(50.0f), glm::vec3(-1.0f, -1.0f, -1.0f));
-            
-            shp->setUniform("model", (model));
-            shp->setUniform("view", (view));
-            shp->setUniform("projection", (projection));
-            //shp->setUniform("usesTexture", true);
-            shp->setUniform("lightColor", glm::vec3(1.0f,1.0f,1.0f));
-
-        cu.draw();
+        for(auto &i : astSpheres)
+        {
+            if(i.collidesOrIsWithin(camSphere))
+            {
+                std::cout<<"Kolizja z asteroidą"<<std::endl;
+                exit(42);
+            }
+        }
 
         if(auto err = glGetError() != GL_NO_ERROR)std::cout<<"[GL Error]: "<<err<<std::endl;
 
@@ -212,7 +239,8 @@ int main()
         win.pollEvents();
     }
 
-    }catch(except *e)
+    }
+    catch(except *e)
     {
         std::cout<<"[GEK ERROR]: "<<e->what<<std::endl;
         glfwTerminate();

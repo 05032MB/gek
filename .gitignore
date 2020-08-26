@@ -1,4 +1,7 @@
 *.o
 *.out
 *.app
+*.exe
 build/*
+media/*
+!media/.keep

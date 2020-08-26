@@ -31,7 +31,21 @@ class texture : iCullable
     std::map<GLenum, GLenum> opts;
     bool flip{false};
 
+    void bindTex(unsigned short numtex = 0)
+    {
+        if(numtex > 90)
+        {
+            throw new failExcept("Invalid texture number to bind, for texture: ", fileName);
+        }
+        glActiveTexture(GL_TEXTURE0 + numtex);
+        glBindTexture(GL_TEXTURE_2D, texId);
+    }
+
     public:
+
+    enum texType {solo = 0, diffuse = 0, specular = 1, normal = 2, letDef = 99};
+
+    texType defType{solo};
 
     //texOpts
     void setOpts(GLenum wrap, GLenum how = GL_MIRRORED_REPEAT, float *borderColor = nullptr )
@@ -48,21 +62,22 @@ class texture : iCullable
     }
     //end
 
-    texture(std::string where, bool flip=false)
+    texture(std::string where, bool flip = false, texType tt = solo)
     {
         fileName = where;
         this->flip = flip;
+        this->defType = tt;
+        glGenTextures(1, &texId);
+    }
+    texture(std::string where, texType tt)
+    {
+        fileName = where;
+        this->defType = tt;
         glGenTextures(1, &texId);
     }
     ~texture()
     {
         glDeleteTextures(1, &texId);
-    }
-
-    void bindTex(unsigned short numtex = 0)
-    {
-        glActiveTexture(GL_TEXTURE0 + numtex);
-        glBindTexture(GL_TEXTURE_2D, texId);
     }
 
     void load()
@@ -94,11 +109,9 @@ class texture : iCullable
         stbiData.reset();
     }
 
-    enum texType {solo = 0, diffuse = 0, specular = 1, normal = 2};
-
-    void use(texType as = solo)
+    void use(texType as = letDef)
     {
-        bindTex(as);
+        bindTex(as == letDef ? defType : as);
     }
 
     void cull() override

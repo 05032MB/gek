@@ -24,6 +24,11 @@ namespace GEK
             this->radius = radius;
         }
 
+        collisionSphereT(precisionType radius = 1)
+        {
+            this->radius = radius;
+        }
+
         bool collidesOrIsWithin(const collisionSphereT & other)
         {
             auto dist = abs(dist3d(this->pos, other.getPosition()));
