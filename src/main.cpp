@@ -17,13 +17,26 @@
 #include <gek/texture.hpp>
 #include <gek/cameraz/cameras.hpp>
 #include <gek/objModel.hpp>
-#include <gek/simpleClock.hpp>
+#include <gek/clockz/simpleClock.hpp>
 #include <gek/collisionSphere.hpp>
 #include <gek/object.hpp>
 
 using namespace GEK;
 
-void processInput(window &win, iCameraStandardOps &cam, simpleClock &cl)
+struct bullet
+{
+    glm::vec3 dir;
+    object bullet;
+    float speed{0.005};
+
+    void move(float deltaTime)
+    {
+        auto fin = bullet.getPosition() + dir;
+        bullet.setPosition( {fin.x + deltaTime * speed, fin.y + deltaTime * speed, fin.z +  + deltaTime * speed});
+    }
+};
+
+void processInput(window &win, camera &cam, simpleClock &cl, object &bull)
 {
     auto window = win();
     if(glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
@@ -62,6 +75,35 @@ void processInput(window &win, iCameraStandardOps &cam, simpleClock &cl)
         cam.moveWithKbd(camera::movement::rolldowns, deltaTime);
 }
 
+std::pair<bool,bullet> shouldMakeBullet(window &win, camera &cam, simpleClock &cl, object &bull)
+{
+    auto window = win();
+    constexpr float fireDelay{5};
+
+    cl.tick();
+
+    if (glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS)
+    {
+        if(fireDelay > cl.getDiff())
+        {
+            std::cout<<"Insuff diff "<<cl.getDiff()<<std::endl;
+            return {false, bullet()};
+        }
+        cl.freezeTimestamp();
+
+        bullet ret;
+
+        auto dir = glm::normalize(cam.position - (cam.position + -cam.antidirection) ); //camera direction hack
+
+        ret.bullet = bull;
+        ret.bullet.setPosition( cam.getPosition() );
+        ret.dir = dir;
+
+        return {true, ret};
+    }
+    return {false, bullet()};
+}
+
 void processMouse(window &win, iCameraStandardOps &cam)
 {
     double x, y;
@@ -86,10 +128,12 @@ void processMouse(window &win, iCameraStandardOps &cam)
     if(isnan(yoffset) || isinf(yoffset))yoffset = 0;
 
     //cam.moveWithMouse(xoffset, -yoffset);
-}  
+}
 
 int main()
 {
+    try
+    {
     GEK::initGLFW();
 
     window win;
@@ -104,13 +148,11 @@ int main()
 
 //////////
 
-    kwaCamera cam({0,0,8});
+    camera cam({0,0,8});
     simpleClock cl;
+    simpleClock shootDelayer;
 
     const unsigned numAst = 10;
-
-    try
-    {
 
     auto shp = std::make_shared<shaderProgram>();
     shp->enslaveShader(std::make_shared<shader>("src/shaderz/vertex/vertex3dWithLightning.glsl", GL_VERTEX_SHADER),
@@ -134,6 +176,9 @@ int main()
     auto shipmodel = std::make_shared<objPrimitive>("../Downloads/Quarren Coyote Ship.obj", "../Downloads/", 0.01, 1 << 0);
     auto zr = std::make_shared<objPrimitive>(/*"tinyobjloader/models/cube.obj"*/"../Downloads/backpack.obj", "../Downloads/"/*"tinyobjloader/models/"*/, 1);
     auto asteroidmodel = std::make_shared<objPrimitive>("../Downloads/Asteroid/10464_Asteroid_v1_Iterations-2.obj", "../Downloads/Asteroid", 0.008);
+
+    auto testBullet = std::make_shared<cube>();
+    testBullet->bind();
     std::cout<<"#####"<<std::endl;
 
     shipmodel->bind();
@@ -149,6 +194,11 @@ int main()
 
     ship.enslaveModel(shipmodel);
     ship.enslaveTex(shiptex, shiptexspec);
+
+    object bull;
+    bull.enslaveModel(testBullet);
+
+    std::vector<bullet> bullets;
 
     int basepos = 0;
     for(auto f = 0; f < numAst; f++)
@@ -166,6 +216,8 @@ int main()
     bakPak.setPosition(glm::vec3( 0.0f,  0.0f,  0.0f));
     bakPak.setRotationAngle(object::whichAngle::roll, 21);
 
+    bullet bu1;
+
 //////////
     win.enableZBuffer(); 
     win.setClearScreenColor(1.0f, 1.0f, 1.0f, 1.0f);
@@ -177,7 +229,7 @@ int main()
         glm::mat4 view          = glm::mat4(1.0f);
         glm::mat4 projection    = glm::mat4(1.0f);
 
-        processInput(win, cam, cl);
+        processInput(win, cam, cl, bull);
         processMouse(win, cam);
 
         win.clearScreen();
@@ -191,7 +243,7 @@ int main()
 
         camSphere.updatePosition(cam.getPosition());
 
-        ship.setPosition({0, 0, 0});
+        //ship.setPosition({cam.position.x + cam.antidirection.x + 1, cam.position.y + cam.antidirection.y + 1, cam.position.z + cam.antidirection.z + 1});
 
         glm::mat4 shipModelMat = glm::mat4(1.0f);
         shipModelMat = glm::translate(shipModelMat, {0,0,0});
@@ -214,6 +266,23 @@ int main()
         shp->setUniform("hasSpecularTex", false);
         /////
 
+        auto potentialBullet = shouldMakeBullet(win, cam, shootDelayer, bull);
+        if(potentialBullet.first)
+        {
+            auto fu = potentialBullet.second.bullet.getPosition();
+            std::cout<<fu.x<<" "<<fu.y<<" "<<fu.z<<std::endl;
+            bullets.push_back(potentialBullet.second);
+        }
+
+        for(auto &i : bullets)
+        {
+            shp->setUniform("model", i.bullet.getModelMatrix());
+            i.move(cl.getDelta());
+            //bu1.bullet.enslaveModel(testBullet);
+            i.bullet.draw();
+        }
+
+        /////
         asteroidtex->use();
 
         for (auto &i : asteroids)
