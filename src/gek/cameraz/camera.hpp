@@ -12,6 +12,7 @@ namespace GEK
 
 class camera : public iCameraStandardOps
 {
+    public:
     glm::vec3 position, antidirection, positivx, up, absoluteUp;
 
     float yaw, pitch; //nie czuje sie na siłach na kwaterniony
