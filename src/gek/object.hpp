@@ -15,7 +15,7 @@ namespace GEK
 
 class object : public iDrawable
 {
-    glm::vec3 pos;
+    glm::vec3 pos{0, 0, 0};
     std::shared_ptr<primitive> model;
     std::vector<std::shared_ptr<texture>> texs;
 

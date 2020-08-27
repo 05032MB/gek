@@ -11,19 +11,36 @@ class simpleClockM
 {
     PrecisionType deltaTime{0};
     PrecisionType lastFrame{0};
+    PrecisionType all{0};
+
+    PrecisionType timestamp{0};
 
     public:
         simpleClockM() = default;
 
         void tick()
         {
-            float currentFrame = glfwGetTime();
+            auto currentFrame = glfwGetTime();
             deltaTime = currentFrame - lastFrame;
             lastFrame = currentFrame;
+            
+            all += deltaTime;
         }
         PrecisionType getDelta() const
         {
             return deltaTime;
+        }
+        PrecisionType getLifetime() const
+        {
+            return all;
+        }
+        void freezeTimestamp()
+        {
+            timestamp = glfwGetTime();
+        }
+        PrecisionType getDiff()
+        {
+            return glfwGetTime() - timestamp;
         }
 };
 
