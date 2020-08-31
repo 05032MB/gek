@@ -28,12 +28,21 @@ struct bullet
     glm::vec3 dir;
     object bullet;
     float speed{0.005};
+    collisionSphere colsp{1};
 
     void move(float deltaTime)
     {
         auto fin = bullet.getPosition() + dir;
         bullet.setPosition( {fin.x + deltaTime * speed, fin.y + deltaTime * speed, fin.z +  + deltaTime * speed});
+        colsp.updatePosition(bullet.getPosition());
     }
+};
+
+struct asteroida
+{
+    collisionSphere dlaKuli{4.5};
+    collisionSphere dlaGracza{7};
+    object internal;
 };
 
 void processInput(window &win, camera &cam, simpleClock &cl, object &bull)
@@ -78,7 +87,7 @@ void processInput(window &win, camera &cam, simpleClock &cl, object &bull)
 std::pair<bool,bullet> shouldMakeBullet(window &win, camera &cam, simpleClock &cl, object &bull)
 {
     auto window = win();
-    constexpr float fireDelay{5};
+    constexpr float fireDelay{1};
 
     cl.tick();
 
@@ -93,10 +102,14 @@ std::pair<bool,bullet> shouldMakeBullet(window &win, camera &cam, simpleClock &c
 
         bullet ret;
 
-        auto dir = glm::normalize(cam.position - (cam.position + -cam.antidirection) ); //camera direction hack
+        auto dir = glm::normalize(cam.position - (cam.position - cam.antidirection) ); //camera direction hack
 
         ret.bullet = bull;
         ret.bullet.setPosition( cam.getPosition() );
+        ret.bullet.setRotationAngle(object::pitch, cam.pitch);
+        ret.bullet.setRotationAngle(object::yaw, -cam.yaw + 270);
+        ret.bullet.setRotationAngle(object::roll, 180);
+        ret.colsp.updatePosition( cam.getPosition() );
         ret.dir = dir;
 
         return {true, ret};
@@ -146,6 +159,8 @@ int main()
 
     errno = 0; //gLfw NiE usTaWia ErrNo aLe wYwoŁujE dUżO fUnkcJi poŚreDnicH
 
+    srand(glfwGetTime());
+
 //////////
 
     camera cam({0,0,8});
@@ -158,36 +173,40 @@ int main()
     shp->enslaveShader(std::make_shared<shader>("src/shaderz/vertex/vertex3dWithLightning.glsl", GL_VERTEX_SHADER),
                         std::make_shared<shader>("src/shaderz/fragment/fragmentWithLightning.glsl", GL_FRAGMENT_SHADER));
     shp->compile();
-    shp->releaseShaders();
+    shp->cull();
     shp->activate();
 
-    object bakPak, asteroids[numAst], ship;
+    object bakPak, ship;
 
     collisionSphere camSphere(cam.getPosition(), 1);
-    collisionSphere astSpheres[numAst] = {1}; //changeme
 
+    std::cout<<"---Loading Texs---"<<std::endl;
     auto shiptex = std::make_shared<texture>("../Downloads/Andorian (1).png", true);
+    auto missletex = std::make_shared<texture>("../Downloads/AIM-9 SIDEWINDER texture2.png", true);
     auto shiptexspec = std::make_shared<texture>("../Downloads/Andorian (4).png", true, texture::specular);
     auto tex2 = std::make_shared<texture>("../Downloads/diffuse.jpg", false);
     auto tex2spe = std::make_shared<texture>("../Downloads/baspecular.jpg", false, texture::specular);
     auto asteroidtex = std::make_shared<texture>("../Downloads/Asteroid/10464_Asteroid_v1_diffuse.jpg", true);
+    std::cout<<"###Texs done###"<<std::endl;
 
-    std::cout<<"-----"<<std::endl;
-    auto shipmodel = std::make_shared<objPrimitive>("../Downloads/Quarren Coyote Ship.obj", "../Downloads/", 0.01, 1 << 0);
-    auto zr = std::make_shared<objPrimitive>(/*"tinyobjloader/models/cube.obj"*/"../Downloads/backpack.obj", "../Downloads/"/*"tinyobjloader/models/"*/, 1);
-    auto asteroidmodel = std::make_shared<objPrimitive>("../Downloads/Asteroid/10464_Asteroid_v1_Iterations-2.obj", "../Downloads/Asteroid", 0.008);
-
-    auto testBullet = std::make_shared<cube>();
+    std::cout<<"---Loading Models---"<<std::endl;
+    auto shipmodel = std::make_shared<objPrimitive>("../Downloads/Quarren Coyote Ship.obj", "./media/", 0.01, 1 << 0);
+    auto zr = std::make_shared<objPrimitive>("../Downloads/backpack.obj", "./media/", 1);
+    auto asteroidmodel = std::make_shared<objPrimitive>("../Downloads/Asteroid/10464_Asteroid_v1_Iterations-2.obj", "./media/", 0.008);
+    auto testBullet = std::make_shared<objPrimitive>("../Downloads/AIM-9 SIDEWINDER.obj", "./media/", 0.01);
     testBullet->bind();
-    std::cout<<"#####"<<std::endl;
+    std::cout<<"###Models done###"<<std::endl;
 
+    std::cout<<"---Generating texs and models---"<<std::endl;
     shipmodel->bind();
     zr->bind();
     asteroidmodel->bind();
-    shiptex->createTexture();
+    shiptex->createTexture(GL_RGBA);
     tex2->createTexture();
     asteroidtex->createTexture();
     tex2spe->createTexture();
+    missletex->createTexture(GL_RGB);
+    std::cout<<"###Gen done###"<<std::endl;
 
     bakPak.enslaveModel(zr);
     bakPak.enslaveTex(tex2, tex2spe);
@@ -197,26 +216,31 @@ int main()
 
     object bull;
     bull.enslaveModel(testBullet);
+    bull.enslaveTex(missletex);
 
     std::vector<bullet> bullets;
+    std::vector<asteroida> asteroids;
 
     int basepos = 0;
     for(auto f = 0; f < numAst; f++)
     {
-        auto &i = asteroids[f];
+        asteroida tmp;
 
-        i.enslaveModel(asteroidmodel);
-        i.enslaveTex(asteroidtex);
-        i.setPosition({basepos + rand() % 10, basepos + rand() % 10, basepos + rand() % 10 });
-        i.setRotationAngle(static_cast<object::whichAngle>(rand() % 3), rand() % 360);
-        astSpheres[f].updatePosition(i.getPosition());
+        tmp.internal.enslaveModel(asteroidmodel);
+        tmp.internal.enslaveTex(asteroidtex);
+        tmp.internal.setPosition({basepos + rand() % 10, basepos + rand() % 10, basepos + rand() % 10 });
+        tmp.internal.setRotationAngle(static_cast<object::whichAngle>(rand() % 3), rand() % 360);
+        tmp.dlaKuli.updatePosition(tmp.internal.getPosition());
+        //tmp.dlaGracza.setRadius(6);
+        asteroids.push_back(tmp);
+
         basepos += rand() % 3 + 5;
     }
 
     bakPak.setPosition(glm::vec3( 0.0f,  0.0f,  0.0f));
     bakPak.setRotationAngle(object::whichAngle::roll, 21);
 
-    bullet bu1;
+    //bullet bu1;
 
 //////////
     win.enableZBuffer(); 
@@ -250,6 +274,10 @@ int main()
         shp->setUniform("model", ship.getModelMatrix());
         shp->setUniform("lightColor", glm::vec3(1.0f,1.0f,1.0f));
 
+
+        shp->setUniform("model", bull.getModelMatrix());
+        bull.draw();
+
         shp->setUniform("hasSpecularTex", true);
         ship.draw();
         shp->setUniform("hasSpecularTex", false);
@@ -278,29 +306,59 @@ int main()
         {
             shp->setUniform("model", i.bullet.getModelMatrix());
             i.move(cl.getDelta());
-            //bu1.bullet.enslaveModel(testBullet);
             i.bullet.draw();
         }
 
-        /////
+        /////asteroidy
         asteroidtex->use();
 
         for (auto &i : asteroids)
         {
-            shp->setUniform("model", i.getModelMatrix() );
+            shp->setUniform("model", i.internal.getModelMatrix() );
             shp->setUniform("lightColor", glm::vec3(1.0f,1.0f,1.0f));
-
-            i.draw();
+            i.internal.draw();
         }
+        ///////
 
-        for(auto &i : astSpheres)
+        ///////kolizje
+        for(auto &i : asteroids)
         {
-            if(i.collidesOrIsWithin(camSphere))
+            if(i.dlaGracza.collidesOrIsWithin(camSphere))
             {
-                std::cout<<"Kolizja z asteroidą"<<std::endl;
-                exit(42);
+                //std::cout<<"Kolizja z asteroidą"<<std::endl;
+                //exit(42);
             }
         }
+
+
+        /*
+        Ograniczenie - wyłapuje na raz tylko jedną parę. Ale i tak nie ma dużo strzelania, więc jest ok.
+        */
+        auto astBullCollCb = [&bullets, &asteroids]() -> std::pair<int, int>
+        {
+            for (auto i = 0; i < bullets.size(); i++)
+            {
+                auto col = bullets[i].colsp;
+                for(auto f = 0; f < asteroids.size(); f++)
+                {
+                    if(col.collidesOrIsWithin(asteroids[f].dlaKuli))
+                    {
+                        return {i, f};
+                    }
+                }
+            }
+            return {-1, -1};
+        };
+
+        auto isThere = astBullCollCb();
+
+        if(isThere.first != -1)
+        {
+            bullets.erase(bullets.begin() + isThere.first);
+            asteroids.erase(asteroids.begin() + isThere.second);
+        }
+
+        ////////
 
         if(auto err = glGetError() != GL_NO_ERROR)std::cout<<"[GL Error]: "<<err<<std::endl;
 

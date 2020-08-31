@@ -91,7 +91,7 @@ class texture : iCullable
         }
     }
 
-    void createTexture()
+    void createTexture(unsigned texType = GL_RGB)
     {
         bindTex();
         for(const auto &i : opts)
@@ -101,7 +101,7 @@ class texture : iCullable
 
         load();
 
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, stbiData.get());
+        glTexImage2D(GL_TEXTURE_2D, 0, texType, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, stbiData.get());
         glGenerateMipmap(GL_TEXTURE_2D);
 
         glBindTexture(GL_TEXTURE_2D, 0);
