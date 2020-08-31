@@ -19,7 +19,7 @@ class object : public iDrawable
     std::shared_ptr<primitive> model;
     std::vector<std::shared_ptr<texture>> texs;
 
-    float yawAng{0}, pitchAng{0}, rollAng{0};
+    float yawAng{0}, pitchAng{0}, rollAng{0}, scale{1.0f};
 
     bool needsToRecalcTransform{true};
 
@@ -32,6 +32,7 @@ class object : public iDrawable
         tmp = glm::rotate(tmp, glm::radians(yawAng), glm::vec3(0, 1, 0));
         tmp = glm::rotate(tmp, glm::radians(pitchAng), glm::vec3(1, 0, 0));
         tmp = glm::rotate(tmp, glm::radians(rollAng), glm::vec3(0, 0, 1));
+        tmp = glm::scale(tmp, glm::vec3(scale));
         needsToRecalcTransform = false;
         return tmp;
     }
@@ -56,6 +57,17 @@ class object : public iDrawable
         }
 
         model->draw();
+    }
+
+    void setScale(float scale)
+    {
+        this->scale = scale;
+        needsToRecalcTransform = true;
+    }
+
+    float getScale() const
+    {
+        return this->scale;
     }
 
     template<typename... Args>

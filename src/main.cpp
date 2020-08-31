@@ -43,6 +43,7 @@ struct asteroida
     collisionSphere dlaKuli{4.5};
     collisionSphere dlaGracza{7};
     object internal;
+    short tty{2};
 };
 //zmienne globalne aktualnego przyspieszenia w danym kierunku
 float forwardsTime = 0;
@@ -282,13 +283,13 @@ int main()
 
         tmp.internal.enslaveModel(asteroidmodel);
         tmp.internal.enslaveTex(asteroidtex);
-        tmp.internal.setPosition({basepos + rand() % 10, basepos + rand() % 10, basepos + rand() % 10 });
+        tmp.internal.setPosition({basepos + rand() % 13, basepos + rand() % 13, basepos + rand() % 13 });
         tmp.internal.setRotationAngle(static_cast<object::whichAngle>(rand() % 3), rand() % 360);
         tmp.dlaKuli.updatePosition(tmp.internal.getPosition());
         //tmp.dlaGracza.setRadius(6);
         asteroids.push_back(tmp);
 
-        basepos += rand() % 3 + 5;
+        basepos += rand() % 3 + 15;
     }
 
     bakPak.setPosition(glm::vec3( 0.0f,  0.0f,  0.0f));
@@ -415,13 +416,37 @@ int main()
             return {-1, -1};
         };
 
-        auto isThere = astBullCollCb();
+        std::pair<int, int> isThere;
+        do{
+            isThere = astBullCollCb();
 
-        if(isThere.first != -1)
-        {
-            bullets.erase(bullets.begin() + isThere.first);
-            asteroids.erase(asteroids.begin() + isThere.second);
-        }
+            if(isThere.first != -1)
+            {
+                auto spawn = rand() % 3 + 1;
+                auto &delCandidate = asteroids[isThere.second];
+
+                while(spawn-- && delCandidate.tty > 0)
+                {
+                    asteroida tmp;
+
+                    tmp.internal.enslaveModel(asteroidmodel);
+                    tmp.internal.enslaveTex(asteroidtex);
+                    tmp.internal.setPosition({delCandidate.internal.getPosition().x + rand() % 3, 
+                                              delCandidate.internal.getPosition().y + rand() % 3, 
+                                              delCandidate.internal.getPosition().z + rand() % 3 });
+
+                    tmp.internal.setRotationAngle(static_cast<object::whichAngle>(rand() % 3), rand() % 360);
+                    tmp.tty = delCandidate.tty - 1;
+                    tmp.internal.setScale(0.4 + 0.1 * tmp.tty);
+                    tmp.dlaKuli.updatePosition(tmp.internal.getPosition());
+                    tmp.dlaKuli.setRadius(tmp.dlaKuli.getRadius() * tmp.internal.getScale());
+                    asteroids.push_back(tmp);
+                }
+
+                bullets.erase(bullets.begin() + isThere.first);
+                asteroids.erase(asteroids.begin() + isThere.second);
+            }
+        }while(isThere.first != -1);
 
         ////////
 
