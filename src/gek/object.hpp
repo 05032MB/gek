@@ -25,19 +25,21 @@ class object : public iDrawable
 
     glm::mat4 cachedModel;
 
-    glm::mat4 applyRotations()
+    glm::mat4 applyTransform()
     {
         glm::mat4 tmp(1.0f);
+        tmp = glm::translate(tmp, pos);
         tmp = glm::rotate(tmp, glm::radians(yawAng), glm::vec3(0, 1, 0));
         tmp = glm::rotate(tmp, glm::radians(pitchAng), glm::vec3(1, 0, 0));
         tmp = glm::rotate(tmp, glm::radians(rollAng), glm::vec3(0, 0, 1));
+        needsToRecalcTransform = false;
         return tmp;
     }
 
     public:
     glm::mat4 getModelMatrix()
     {
-        return needsToRecalcTransform ? glm::translate(applyRotations(), pos) : cachedModel;
+        return needsToRecalcTransform ? cachedModel = applyTransform() : cachedModel;
     }
 
     void draw() override
