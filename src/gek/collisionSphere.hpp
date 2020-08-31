@@ -44,6 +44,11 @@ namespace GEK
             this->pos = pos;
         }
 
+        void setRadius(precisionType radius)
+        {
+            this->radius = radius;
+        }
+
         glm::vec3 getPosition() const
         {
             return this->pos;
