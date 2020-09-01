@@ -1,4 +1,4 @@
-GEK - openGl nicE renderer
+GEK - Gra w Asteroidy
 
 Mikroprojekt na zajęcia Grafiki Komputerowej na PUT Poznań.
 

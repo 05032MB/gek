@@ -44,6 +44,7 @@ struct asteroida
     collisionSphere dlaGracza{7};
     object internal;
     short tty{2};
+    short rotCnt{0};
 };
 //zmienne globalne aktualnego przyspieszenia w danym kierunku
 float forwardsTime = 0;
@@ -81,7 +82,7 @@ void moveInertia(GLFWwindow* window, camera &cam){
 	//cam.moveWithKbd(kwaCamera::movement::rolldowns, rolldownsTime);
 }
 
-void processInput(window &win, camera &cam, simpleClock &cl, object &bull)
+void processInput(window &win, iCameraStandardOps &cam, simpleClock &cl, object &bull)
 {
     auto window = win();
     if(glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
@@ -150,7 +151,7 @@ std::pair<bool,bullet> shouldMakeBullet(window &win, camera &cam, simpleClock &c
     {
         if(fireDelay > cl.getDiff())
         {
-            std::cout<<"Insuff diff "<<cl.getDiff()<<std::endl;
+            //std::cout<<"Insuff diff "<<cl.getDiff()<<std::endl;
             return {false, bullet()};
         }
         cl.freezeTimestamp();
@@ -234,6 +235,7 @@ int main()
     object bakPak, ship;
 
     collisionSphere camSphere(cam.getPosition(), 1);
+    collisionSphere megaSphere9(cam.getPosition(), 213742); //absolutny kraniec mapy
 
     std::cout<<"---Loading Texs---"<<std::endl;
     auto shiptex = std::make_shared<texture>("../Downloads/Andorian (1).png", true);
@@ -247,7 +249,7 @@ int main()
     std::cout<<"---Loading Models---"<<std::endl;
     auto shipmodel = std::make_shared<objPrimitive>("../Downloads/Quarren Coyote Ship.obj", "./media/", 0.01, 1 << 0);
     auto zr = std::make_shared<objPrimitive>("../Downloads/backpack.obj", "./media/", 1);
-    auto asteroidmodel = std::make_shared<objPrimitive>("../Downloads/Asteroid/10464_Asteroid_v1_Iterations-2.obj", "./media/", 0.008);
+    auto asteroidmodel = std::make_shared<objPrimitive>("../Downloads/Asteroid/10464_Asteroid_v1_Iterations-2.obj", "./media/", 0.0088);
     auto testBullet = std::make_shared<objPrimitive>("../Downloads/AIM-9 SIDEWINDER.obj", "./media/", 0.01);
     testBullet->bind();
     std::cout<<"###Models done###"<<std::endl;
@@ -276,7 +278,7 @@ int main()
     std::vector<bullet> bullets;
     std::vector<asteroida> asteroids;
 
-    int basepos = 0;
+    int basepos = 1;
     for(auto f = 0; f < numAst; f++)
     {
         asteroida tmp;
@@ -295,11 +297,9 @@ int main()
     bakPak.setPosition(glm::vec3( 0.0f,  0.0f,  0.0f));
     bakPak.setRotationAngle(object::whichAngle::roll, 21);
 
-    //bullet bu1;
-
 //////////
     win.enableZBuffer(); 
-    win.setClearScreenColor(1.0f, 1.0f, 1.0f, 1.0f);
+    win.setClearScreenColor(0.0f, 0.0f, 0.0f, 1.0f);
     while(!win.shouldClose())
     {
 
@@ -363,8 +363,8 @@ int main()
         auto potentialBullet = shouldMakeBullet(win, cam, shootDelayer, bull);
         if(potentialBullet.first)
         {
-            auto fu = potentialBullet.second.bullet.getPosition();
-            std::cout<<fu.x<<" "<<fu.y<<" "<<fu.z<<std::endl;
+            /*auto fu = potentialBullet.second.bullet.getPosition();
+            std::cout<<fu.x<<" "<<fu.y<<" "<<fu.z<<std::endl;*/
             bullets.push_back(potentialBullet.second);
         }
 
@@ -386,6 +386,17 @@ int main()
         }
         ///////
 
+        ///////animacje asteroid
+        for(auto &i : asteroids)
+        {
+            if(i.rotCnt > 0)
+            {
+                auto selAngle = static_cast<object::whichAngle>(rand() % 3);
+                i.internal.setRotationAngle( selAngle, i.internal.getRotationAngle(selAngle) + cl.getDelta() * 50 );
+                i.rotCnt--;
+            }
+        }
+
         ///////kolizje
         for(auto &i : asteroids)
         {
@@ -395,7 +406,6 @@ int main()
                 //exit(42);
             }
         }
-
 
         /*
         Ograniczenie - wyłapuje na raz tylko jedną parę. Ale i tak nie ma dużo strzelania, więc jest ok.
@@ -420,7 +430,7 @@ int main()
         do{
             isThere = astBullCollCb();
 
-            if(isThere.first != -1)
+            if(unlikely(isThere.first != -1))   //do strzelania dochodzi statystycznie żadko
             {
                 auto spawn = rand() % 3 + 1;
                 auto &delCandidate = asteroids[isThere.second];
@@ -437,7 +447,8 @@ int main()
 
                     tmp.internal.setRotationAngle(static_cast<object::whichAngle>(rand() % 3), rand() % 360);
                     tmp.tty = delCandidate.tty - 1;
-                    tmp.internal.setScale(0.4 + 0.1 * tmp.tty);
+                    tmp.internal.setScale(0.2 + 0.1 * tmp.tty);
+                    tmp.rotCnt = 200;
                     tmp.dlaKuli.updatePosition(tmp.internal.getPosition());
                     tmp.dlaKuli.setRadius(tmp.dlaKuli.getRadius() * tmp.internal.getScale());
                     asteroids.push_back(tmp);
@@ -447,6 +458,11 @@ int main()
                 asteroids.erase(asteroids.begin() + isThere.second);
             }
         }while(isThere.first != -1);
+
+        std::remove_if(bullets.begin(), bullets.end(), [&megaSphere9](bullet & b) -> bool
+        {
+            return b.colsp.collidesOrIsWithin(megaSphere9);
+        }); //usuń pociski daleko od środka mapy
 
         ////////
 

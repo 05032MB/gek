@@ -115,7 +115,7 @@ class object : public iDrawable
         }
         needsToRecalcTransform = true;
     }
-    float getRotationAngle(whichAngle ang, float degrees)
+    float getRotationAngle(whichAngle ang)
     {
         switch (ang)
         {
