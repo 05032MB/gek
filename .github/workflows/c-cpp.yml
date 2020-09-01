@@ -13,7 +13,7 @@ jobs:
 
     steps:
     - name: Install deps
-      run: apt install libglfw3-dev libglew-dev mesa-common-dev libglm-dev
+      run: sudo apt install libglfw3-dev libglew-dev mesa-common-dev libglm-dev
     - name: make
       run: make all
     - uses: actions/upload-artifact@v2
