@@ -14,8 +14,8 @@ jobs:
     steps:
     - name: Install deps
       run: sudo apt install libglfw3-dev libglew-dev mesa-common-dev libglm-dev git
-    - name: clone
-      run: git clone --recursive https://github.com/05032MB/gek && cd gek
+    - name: ls
+      run: ls -al
     - name: make
       run: make all
     - uses: actions/upload-artifact@v2
