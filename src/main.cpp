@@ -227,7 +227,7 @@ int main()
 
     auto shp = std::make_shared<shaderProgram>();
     shp->enslaveShader(std::make_shared<shader>("src/shaderz/vertex/vertex3dWithLightning.glsl", GL_VERTEX_SHADER),
-                        std::make_shared<shader>("src/shaderz/fragment/fragmentWithLightning.glsl", GL_FRAGMENT_SHADER));
+                        std::make_shared<shader>("src/shaderz/fragment/fragmentWithLightning2.glsl", GL_FRAGMENT_SHADER));
     shp->compile();
     shp->cull();
     shp->activate();
@@ -320,8 +320,25 @@ int main()
         projection = glm::perspective(glm::radians(cam.zoom), (float)win.width() / (float)win.height(), 0.1f, 500.0f);
         shp->setUniform("actCameraPos", cam.getPosition());
         shp->setUniform("staticLightPos", glm::vec3(10,0,0));
+        
+        //shp->setUniform("dirlight.dir", -cam.antidirection);
+
         shp->setUniform("view", (view));
         shp->setUniform("projection", (projection));
+        
+        shp->setUniform("flashlight.diffuse", glm::vec3(0.2, 0.2, 0.2));
+        shp->setUniform("flashlight.ambient", glm::vec3(1.0, 1.0, 1.0));
+        shp->setUniform("flashlight.specular", glm::vec3(0.8, 0.8, 0.8));
+
+        shp->setUniform("flashlight.pos", cam.getPosition());
+        shp->setUniform("flashlight.dir", cam.antidirection);
+
+        shp->setUniform("flashlight.innerCutOff", glm::cos(glm::radians(10.0f)) );
+        shp->setUniform("flashlight.outerCutOff", glm::cos(glm::radians(15.0f)) );
+
+        shp->setUniform("flashlight.constant", 1.0f);
+        shp->setUniform("flashlight.linear", 0.09f);
+        shp->setUniform("flashlight.quadratic", 0.032f);
 
         camSphere.updatePosition(cam.getPosition());
 
