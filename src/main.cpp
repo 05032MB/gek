@@ -6,8 +6,8 @@
 #include <glm/gtc/type_ptr.hpp>
 
 #include <cstdlib>
-
 #include <iostream>
+//#include <thread>
 
 #include <gek/misc.hpp>
 #include <gek/shaderProgram.hpp>
@@ -82,12 +82,23 @@ void moveInertia(GLFWwindow* window, camera &cam){
 	//cam.moveWithKbd(kwaCamera::movement::rolldowns, rolldownsTime);
 }
 
+bool isFlashlight{true};
+
 void processInput(window &win, iCameraStandardOps &cam, simpleClock &cl, object &bull)
 {
     auto window = win();
     if(glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
     {
         glfwSetWindowShouldClose(window, true);
+    }
+
+    if(glfwGetKey(window, GLFW_KEY_F) == GLFW_PRESS)
+    {
+        if(0.333f < cl.getDiff())
+        {
+            isFlashlight = !isFlashlight;
+            cl.freezeTimestamp();
+        }
     }
 
     auto deltaTime = cl.getDelta();
@@ -300,9 +311,22 @@ int main()
 //////////
     win.enableZBuffer(); 
     win.setClearScreenColor(0.0f, 0.0f, 0.0f, 1.0f);
+
+    shp->activate();
+
+    shp->setUniform("flashlight.innerCutOff", glm::cos(glm::radians(10.0f)) );
+    shp->setUniform("flashlight.outerCutOff", glm::cos(glm::radians(15.0f)) );
+
+    shp->setUniform("flashlight.constant", 1.0f);
+    shp->setUniform("flashlight.linear", 0.09f);
+    shp->setUniform("flashlight.quadratic", 0.032f);
+
+    shp->setUniform("flashlight.diffuse", glm::vec3(0.2, 0.2, 0.2));
+    shp->setUniform("flashlight.ambient", glm::vec3(1.0, 1.0, 1.0));
+    shp->setUniform("flashlight.specular", glm::vec3(0.8, 0.8, 0.8));
+
     while(!win.shouldClose())
     {
-
         cl.tick();
 
         glm::mat4 view          = glm::mat4(1.0f);
@@ -325,20 +349,10 @@ int main()
 
         shp->setUniform("view", (view));
         shp->setUniform("projection", (projection));
-        
-        shp->setUniform("flashlight.diffuse", glm::vec3(0.2, 0.2, 0.2));
-        shp->setUniform("flashlight.ambient", glm::vec3(1.0, 1.0, 1.0));
-        shp->setUniform("flashlight.specular", glm::vec3(0.8, 0.8, 0.8));
 
+        shp->setUniform("usesFlashlight", isFlashlight);
         shp->setUniform("flashlight.pos", cam.getPosition());
         shp->setUniform("flashlight.dir", cam.antidirection);
-
-        shp->setUniform("flashlight.innerCutOff", glm::cos(glm::radians(10.0f)) );
-        shp->setUniform("flashlight.outerCutOff", glm::cos(glm::radians(15.0f)) );
-
-        shp->setUniform("flashlight.constant", 1.0f);
-        shp->setUniform("flashlight.linear", 0.09f);
-        shp->setUniform("flashlight.quadratic", 0.032f);
 
         camSphere.updatePosition(cam.getPosition());
 

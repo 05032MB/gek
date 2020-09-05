@@ -10,6 +10,7 @@ out vec4 fragColor;
 uniform sampler2D diffuseTex;
 uniform sampler2D specularTex;
 uniform bool hasSpecularTex;
+uniform bool usesFlashlight;
 
 uniform vec3 lightColor;
 uniform float ambientLight;
@@ -102,5 +103,6 @@ void main()
     }
     //////////
 
-    fragColor = vec4(objColor * (ambientL + diffuse + specular + CalcFlashlight(flashlight, normobjnorm, worldPos, viewDir) ), 1.0);
+    fragColor = vec4(objColor * (ambientL + diffuse + specular + 
+                                    (usesFlashlight ? CalcFlashlight(flashlight, normobjnorm, worldPos, viewDir) : vec3(0) ) ), 1.0);
 }
