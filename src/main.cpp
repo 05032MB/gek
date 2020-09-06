@@ -44,6 +44,41 @@ struct asteroida
     collisionSphere dlaGracza{7};
     object internal;
 };
+//zmienne globalne aktualnego przyspieszenia w danym kierunku
+float forwardsTime = 0;
+float backwardsTime = 0;
+float leftsTime = 0;
+float rightsTime = 0;
+float upsTime = 0;
+float downsTime = 0;
+float pitchupsTime = 0;
+float pitchdownsTime = 0;
+float yawupsTime = 0;
+float yawdownsTime = 0;
+float rollupsTime = 0;
+float rolldownsTime = 0;
+
+//modyfikatory przyspieszenia
+float scaleGlobal = 20.0;
+float scaleUpDown = 10.0;
+float scalePitchYawRoll = 20.0;
+float scaleStabilize = 1.01;
+
+//funkcja ruchu w bezwładności
+void moveInertia(GLFWwindow* window, camera &cam){
+	cam.moveWithKbd(kwaCamera::movement::forwards, forwardsTime);
+	cam.moveWithKbd(kwaCamera::movement::backwards, backwardsTime);
+	cam.moveWithKbd(kwaCamera::movement::lefts, leftsTime);
+	cam.moveWithKbd(kwaCamera::movement::rights, rightsTime);
+	cam.moveWithKbd(kwaCamera::movement::ups, upsTime);
+	cam.moveWithKbd(kwaCamera::movement::downs, downsTime);
+	cam.moveWithKbd(kwaCamera::movement::pitchups, pitchupsTime);
+	cam.moveWithKbd(kwaCamera::movement::pitchdowns, pitchdownsTime);
+	cam.moveWithKbd(kwaCamera::movement::yawups, yawupsTime);
+	cam.moveWithKbd(kwaCamera::movement::yawdowns, yawdownsTime);
+	//cam.moveWithKbd(kwaCamera::movement::rollups, rollupsTime);
+	//cam.moveWithKbd(kwaCamera::movement::rolldowns, rolldownsTime);
+}
 
 void processInput(window &win, camera &cam, simpleClock &cl, object &bull)
 {
@@ -54,34 +89,53 @@ void processInput(window &win, camera &cam, simpleClock &cl, object &bull)
     }
 
     auto deltaTime = cl.getDelta();
+	deltaTime /= scaleGlobal;
 
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-        cam.moveWithKbd(camera::movement::forwards, deltaTime);
+		forwardsTime += deltaTime;
     if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-        cam.moveWithKbd(camera::movement::backwards, deltaTime);
+        backwardsTime += deltaTime;
     if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-        cam.moveWithKbd(camera::movement::lefts, deltaTime);
+        leftsTime += deltaTime;
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-        cam.moveWithKbd(camera::movement::rights, deltaTime);
+        rightsTime += deltaTime;
     if (glfwGetKey(window, GLFW_KEY_Z) == GLFW_PRESS)
-        cam.moveWithKbd(camera::movement::ups, deltaTime);
+        upsTime += deltaTime/scaleUpDown;
     if (glfwGetKey(window, GLFW_KEY_X) == GLFW_PRESS)
-        cam.moveWithKbd(camera::movement::downs, deltaTime);
+        downsTime += deltaTime/scaleUpDown;
     
     if (glfwGetKey(window, GLFW_KEY_O) == GLFW_PRESS)
-        cam.moveWithKbd(camera::movement::pitchups, deltaTime);
+        pitchupsTime += deltaTime/scalePitchYawRoll;
     if (glfwGetKey(window, GLFW_KEY_P) == GLFW_PRESS)
-        cam.moveWithKbd(camera::movement::pitchdowns, deltaTime);
+        pitchdownsTime += deltaTime/scalePitchYawRoll;
    
     if (glfwGetKey(window, GLFW_KEY_K) == GLFW_PRESS)
-        cam.moveWithKbd(camera::movement::yawups, deltaTime);
+        yawupsTime += deltaTime/scalePitchYawRoll;
     if (glfwGetKey(window, GLFW_KEY_L) == GLFW_PRESS)
-        cam.moveWithKbd(camera::movement::yawdowns, deltaTime);
-
-    if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
-        cam.moveWithKbd(camera::movement::rollups, deltaTime);
+        yawdownsTime += deltaTime/scalePitchYawRoll;
+	/*
+	if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
+		rollupsTime += deltaTime/scalePitchYawRoll;
     if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)
-        cam.moveWithKbd(camera::movement::rolldowns, deltaTime);
+		rolldownsTime += deltaTime/scalePitchYawRoll;
+     */
+	
+	//ratunkowa stabilizacja ruchu aka hamulce
+	if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS){
+		forwardsTime /= scaleStabilize;
+		backwardsTime /= scaleStabilize;
+		leftsTime /= scaleStabilize;
+		rightsTime /= scaleStabilize;
+		upsTime /= scaleStabilize;
+		downsTime /= scaleStabilize;
+		pitchupsTime /= scaleStabilize;
+		pitchdownsTime /= scaleStabilize;
+		yawupsTime /= scaleStabilize;
+		yawdownsTime /= scaleStabilize;
+		//rollupsTime /= scaleStabilize;
+		//rolldownsTime /= scaleStabilize;
+	}
+
 }
 
 std::pair<bool,bullet> shouldMakeBullet(window &win, camera &cam, simpleClock &cl, object &bull)
@@ -252,9 +306,12 @@ int main()
 
         glm::mat4 view          = glm::mat4(1.0f);
         glm::mat4 projection    = glm::mat4(1.0f);
+        glm::mat4 model    = glm::mat4(1.0f);
 
         processInput(win, cam, cl, bull);
         processMouse(win, cam);
+		moveInertia(win(), cam);
+        //processMouse(win());
 
         win.clearScreen();
 
@@ -279,6 +336,15 @@ int main()
         bull.draw();
 
         shp->setUniform("hasSpecularTex", true);
+            model = glm::translate(model, glm::vec3( 0.0f,  0.0f,  -8.0f));
+            //model = glm::rotate(model, (float)glfwGetTime() * glm::radians(50.0f), glm::vec3(-1.0f, -1.0f, -1.0f));
+            //model = glm::rotate(model, (float)glfwGetTime() * glm::radians(50.0f), glm::vec3(-1.0f, -1.0f, -1.0f));  
+            
+            //shp->setUniform("model", (model));
+            //shp->setUniform("view", (glm::mat4(1.0f)));
+            //xshp->setUniform("projection", (projection));
+            //shp->setUniform("usesTexture", true);
+            //xshp->setUniform("lightColor", glm::vec3(1.0f,1.0f,1.0f));
         ship.draw();
         shp->setUniform("hasSpecularTex", false);
 
