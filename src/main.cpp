@@ -249,19 +249,19 @@ int main()
     collisionSphere megaSphere9(cam.getPosition(), 213742); //absolutny kraniec mapy
 
     std::cout<<"---Loading Texs---"<<std::endl;
-    auto shiptex = std::make_shared<texture>("../Downloads/Andorian (1).png", true);
-    auto missletex = std::make_shared<texture>("../Downloads/AIM-9 SIDEWINDER texture2.png", true);
-    auto shiptexspec = std::make_shared<texture>("../Downloads/Andorian (4).png", true, texture::specular);
-    auto tex2 = std::make_shared<texture>("../Downloads/diffuse.jpg", false);
-    auto tex2spe = std::make_shared<texture>("../Downloads/baspecular.jpg", false, texture::specular);
-    auto asteroidtex = std::make_shared<texture>("../Downloads/Asteroid/10464_Asteroid_v1_diffuse.jpg", true);
+    auto shiptex = std::make_shared<texture>("media/Andorian (1).png", true);
+    auto missletex = std::make_shared<texture>("media/AIM-9 SIDEWINDER texture2.png", true);
+    auto shiptexspec = std::make_shared<texture>("media/Andorian (4).png", true, texture::specular);
+    auto tex2 = std::make_shared<texture>("media/diffuseEx.jpg", false);
+    auto tex2spe = std::make_shared<texture>("media/baspecular.jpg", false, texture::specular);
+    auto asteroidtex = std::make_shared<texture>("media/Asteroid/10464_Asteroid_v1_diffuse.jpg", true);
     std::cout<<"###Texs done###"<<std::endl;
 
     std::cout<<"---Loading Models---"<<std::endl;
-    auto shipmodel = std::make_shared<objPrimitive>("../Downloads/Quarren Coyote Ship.obj", "./media/", 0.01, 1 << 0);
-    auto zr = std::make_shared<objPrimitive>("../Downloads/backpack.obj", "./media/", 1);
-    auto asteroidmodel = std::make_shared<objPrimitive>("../Downloads/Asteroid/10464_Asteroid_v1_Iterations-2.obj", "./media/", 0.0088);
-    auto testBullet = std::make_shared<objPrimitive>("../Downloads/AIM-9 SIDEWINDER.obj", "./media/", 0.01);
+    auto shipmodel = std::make_shared<objPrimitive>("media/Quarren Coyote Ship.obj", "./media/", 0.01, 1 << 0);
+    auto zr = std::make_shared<objPrimitive>("media/backpack.obj", "./media/", 1);
+    auto asteroidmodel = std::make_shared<objPrimitive>("media/Asteroid/10464_Asteroid_v1_Iterations-2.obj", "./media/", 0.0088);
+    auto testBullet = std::make_shared<objPrimitive>("media/AIM-9 SIDEWINDER.obj", "./media/", 0.01);
     testBullet->bind();
     std::cout<<"###Models done###"<<std::endl;
 
