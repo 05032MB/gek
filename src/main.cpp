@@ -331,20 +331,19 @@ int main()
         shp->setUniform("model", ship.getModelMatrix());
         shp->setUniform("lightColor", glm::vec3(1.0f,1.0f,1.0f));
 
-
         shp->setUniform("model", bull.getModelMatrix());
         bull.draw();
 
         shp->setUniform("hasSpecularTex", true);
-            model = glm::translate(model, glm::vec3( 0.0f,  0.0f,  -8.0f));
+            /*model = glm::translate(model, glm::vec3( 0.0f,  0.0f,  -8.0f));
             //model = glm::rotate(model, (float)glfwGetTime() * glm::radians(50.0f), glm::vec3(-1.0f, -1.0f, -1.0f));
             //model = glm::rotate(model, (float)glfwGetTime() * glm::radians(50.0f), glm::vec3(-1.0f, -1.0f, -1.0f));  
             
-            //shp->setUniform("model", (model));
-            //shp->setUniform("view", (glm::mat4(1.0f)));
-            //xshp->setUniform("projection", (projection));
+            shp->setUniform("model", (model));
+            shp->setUniform("view", (glm::mat4(1.0f))); //XXXX
+            shp->setUniform("projection", (projection));
             //shp->setUniform("usesTexture", true);
-            //xshp->setUniform("lightColor", glm::vec3(1.0f,1.0f,1.0f));
+            shp->setUniform("lightColor", glm::vec3(1.0f,1.0f,1.0f));*/
         ship.draw();
         shp->setUniform("hasSpecularTex", false);
 
