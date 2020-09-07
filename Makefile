@@ -2,7 +2,7 @@ LIBZ=
 CXX= g++
 SRCZ= src/main.cpp
 HDRZ=
-INC= -I stb/ -I tinyobjloader/ -I src/
+INC= -I stb/ -I tinyobjloader/ -I src/ -static
 TRGT= gek.app
 CUSTODEPMBUILD=
 

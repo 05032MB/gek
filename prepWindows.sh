@@ -20,4 +20,5 @@ make -j `nproc` glfw
 cd ..
 git clone --depth 1 --branch master https://github.com/g-truc/glm
 cp glew/lib/glew32.dll ../glew32.dll
+rm -rf glew/auto
 echo "Koniec"
