@@ -122,9 +122,9 @@ void processInput(window &win, iCameraStandardOps &cam, simpleClock &cl, object 
     if (glfwGetKey(window, GLFW_KEY_P) == GLFW_PRESS)
         pitchdownsTime += deltaTime/scalePitchYawRoll;
    
-    if (glfwGetKey(window, GLFW_KEY_K) == GLFW_PRESS)
-        yawupsTime += deltaTime/scalePitchYawRoll;
     if (glfwGetKey(window, GLFW_KEY_L) == GLFW_PRESS)
+        yawupsTime += deltaTime/scalePitchYawRoll;
+    if (glfwGetKey(window, GLFW_KEY_K) == GLFW_PRESS)
         yawdownsTime += deltaTime/scalePitchYawRoll;
 	/*
 	if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
@@ -151,6 +151,9 @@ void processInput(window &win, iCameraStandardOps &cam, simpleClock &cl, object 
 
 }
 
+glm::vec3 adjustBulletStart = glm::vec3(0.0f,0.0f,0.0f); //przesunięcie odpalenia pocisku pod statek
+//trzeba dobrac odpowiednie parametry
+
 std::pair<bool,bullet> shouldMakeBullet(window &win, camera &cam, simpleClock &cl, object &bull)
 {
     auto window = win();
@@ -172,7 +175,7 @@ std::pair<bool,bullet> shouldMakeBullet(window &win, camera &cam, simpleClock &c
         auto dir = glm::normalize(cam.position - (cam.position - cam.antidirection) ); //camera direction hack
 
         ret.bullet = bull;
-        ret.bullet.setPosition( cam.getPosition() );
+        ret.bullet.setPosition( cam.getPosition() + adjustBulletStart);
         ret.bullet.setRotationAngle(object::pitch, cam.pitch);
         ret.bullet.setRotationAngle(object::yaw, -cam.yaw + 270);
         ret.bullet.setRotationAngle(object::roll, 180);
@@ -358,9 +361,7 @@ int main()
 
         //ship.setPosition({cam.position.x + cam.antidirection.x + 1, cam.position.y + cam.antidirection.y + 1, cam.position.z + cam.antidirection.z + 1});
 
-        glm::mat4 shipModelMat = glm::mat4(1.0f);
-        shipModelMat = glm::translate(shipModelMat, {0,0,0});
-        shp->setUniform("model", ship.getModelMatrix());
+        
         shp->setUniform("lightColor", glm::vec3(1.0f,1.0f,1.0f));
 
         shp->setUniform("model", bull.getModelMatrix());
@@ -376,7 +377,14 @@ int main()
             shp->setUniform("projection", (projection));
             //shp->setUniform("usesTexture", true);
             shp->setUniform("lightColor", glm::vec3(1.0f,1.0f,1.0f));*/
+		
+		shp->setUniform("view", (glm::mat4(1.0f))); //przyklejenie statku do kamery poprzez 1 w view matrix
+		glm::mat4 shipModelMat = glm::mat4(1.0f);
+        shipModelMat = glm::translate(shipModelMat, glm::vec3( 0.0f,  0.0f,  -7.0f));
+        shp->setUniform("model", shipModelMat);
         ship.draw();
+		shp->setUniform("view", (view)); //przywrócenie normalnego view matrix
+		
         shp->setUniform("hasSpecularTex", false);
 
             //model = glm::rotate(model, (float)glfwGetTime() * glm::radians(50.0f), glm::vec3(-1.0f, -1.0f, -1.0f));  
