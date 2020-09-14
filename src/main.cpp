@@ -7,6 +7,8 @@
 
 #include <cstdlib>
 #include <iostream>
+#include <vector>
+#include <string>
 //#include <thread>
 
 #include <gek/misc.hpp>
@@ -20,6 +22,7 @@
 #include <gek/clockz/simpleClock.hpp>
 #include <gek/collisionSphere.hpp>
 #include <gek/object.hpp>
+#include <gek/skybox_vertices.h>
 
 using namespace GEK;
 
@@ -213,6 +216,38 @@ void processMouse(window &win, iCameraStandardOps &cam)
     //cam.moveWithMouse(xoffset, -yoffset);
 }
 
+unsigned int loadSkybox(std::vector<std::string> faces)
+{
+    unsigned int textureID;
+    glGenTextures(1, &textureID);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, textureID);
+
+    int width, height, nrChannels;
+    for (unsigned int i = 0; i < faces.size(); i++)
+    {
+        unsigned char *data = stbi_load(faces[i].c_str(), &width, &height, &nrChannels, 3);
+        if (data)
+        {
+            glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i, 
+                         0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data
+            );
+            stbi_image_free(data);
+        }
+        else
+        {
+            std::cout << "Cubemap tex failed to load at path: " << faces[i] << std::endl;
+            stbi_image_free(data);
+        }
+    }
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+
+    return textureID;
+} 
+
 int main()
 {
     try
@@ -238,13 +273,22 @@ int main()
     simpleClock shootDelayer;
 
     const unsigned numAst = 10;
-
+	
+	//regular shader
     auto shp = std::make_shared<shaderProgram>();
     shp->enslaveShader(std::make_shared<shader>("src/shaderz/vertex/vertex3dWithLightning.glsl", GL_VERTEX_SHADER),
                         std::make_shared<shader>("src/shaderz/fragment/fragmentWithLightning2.glsl", GL_FRAGMENT_SHADER));
     shp->compile();
     shp->cull();
     shp->activate();
+	
+	//sky shader
+	auto sky_shp = std::make_shared<shaderProgram>();
+    sky_shp->enslaveShader(std::make_shared<shader>("src/shaderz/vertex/vertexSky.glsl", GL_VERTEX_SHADER),
+                        std::make_shared<shader>("src/shaderz/fragment/fragmentSky.glsl", GL_FRAGMENT_SHADER));
+    sky_shp->compile();
+    sky_shp->cull();
+    sky_shp->activate();
 
     object bakPak, ship;
 
@@ -258,6 +302,16 @@ int main()
     auto tex2 = std::make_shared<texture>("media/diffuseEx.jpg", false);
     auto tex2spe = std::make_shared<texture>("media/baspecular.jpg", false, texture::specular);
     auto asteroidtex = std::make_shared<texture>("media/Asteroid/10464_Asteroid_v1_diffuse.jpg", true);
+	
+	//skybox
+	std::vector<std::string> sky_faces = {"media/Skybox/right.png", 
+									"media/Skybox/left.png",
+									"media/Skybox/top.png",
+									"media/Skybox/bottom.png",
+									"media/Skybox/front.png",
+									"media/Skybox/back.png"};
+	unsigned int skytex = loadSkybox(sky_faces);
+	
     std::cout<<"###Texs done###"<<std::endl;
 
     std::cout<<"---Loading Models---"<<std::endl;
@@ -266,6 +320,16 @@ int main()
     auto asteroidmodel = std::make_shared<objPrimitive>("media/Asteroid/10464_Asteroid_v1_Iterations-2.obj", "./media/", 0.0088);
     auto testBullet = std::make_shared<objPrimitive>("media/AIM-9 SIDEWINDER.obj", "./media/", 0.01);
     testBullet->bind();
+	
+	//skybox
+	unsigned int skyboxVAO, skyboxVBO;
+    glGenVertexArrays(1, &skyboxVAO);
+    glGenBuffers(1, &skyboxVBO);
+    glBindVertexArray(skyboxVAO);
+    glBindBuffer(GL_ARRAY_BUFFER, skyboxVBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(skyboxVertices), &skyboxVertices, GL_STATIC_DRAW);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
     std::cout<<"###Models done###"<<std::endl;
 
     std::cout<<"---Generating texs and models---"<<std::endl;
@@ -309,7 +373,7 @@ int main()
     }
 
     bakPak.setPosition(glm::vec3( 0.0f,  0.0f,  0.0f));
-    bakPak.setRotationAngle(object::whichAngle::roll, 21);
+    bakPak.setRotationAngle(object::whichAngle::roll, 21);	
 
 //////////
     win.enableZBuffer(); 
@@ -345,6 +409,18 @@ int main()
 
         view  = cam.getViewMatrix();
         projection = glm::perspective(glm::radians(cam.zoom), (float)win.width() / (float)win.height(), 0.1f, 500.0f);
+		
+		//skybox
+		glDepthMask(GL_FALSE);
+		sky_shp->activate();
+		sky_shp->setUniform("projection", (projection));
+		sky_shp->setUniform("view", (glm::mat4(glm::mat3(cam.getViewMatrix()))));
+		glBindVertexArray(skyboxVAO);
+		glBindTexture(GL_TEXTURE_CUBE_MAP, skytex);
+		glDrawArrays(GL_TRIANGLES, 0, 36);
+		glDepthMask(GL_TRUE);
+		shp->activate();
+		
         shp->setUniform("actCameraPos", cam.getPosition());
         shp->setUniform("staticLightPos", glm::vec3(10,0,0));
         
@@ -397,6 +473,7 @@ int main()
         bakPak.draw();
 
         shp->setUniform("hasSpecularTex", false);
+		
         /////
 
         auto potentialBullet = shouldMakeBullet(win, cam, shootDelayer, bull);
