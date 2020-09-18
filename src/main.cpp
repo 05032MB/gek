@@ -48,6 +48,7 @@ struct asteroida
     object internal;
     short tty{2};
     short rotCnt{0};
+    glm::vec3 movAnimDir;
 };
 //zmienne globalne aktualnego przyspieszenia w danym kierunku
 float forwardsTime = 0;
@@ -154,7 +155,7 @@ void processInput(window &win, iCameraStandardOps &cam, simpleClock &cl, object 
 
 }
 
-glm::vec3 adjustBulletStart = glm::vec3(0.0f,0.0f,0.0f); //przesunięcie odpalenia pocisku pod statek
+//glm::vec3 adjustBulletStart = glm::vec3(0.0f,0.0f,9.0f);
 //trzeba dobrac odpowiednie parametry
 
 std::pair<bool,bullet> shouldMakeBullet(window &win, camera &cam, simpleClock &cl, object &bull)
@@ -178,7 +179,14 @@ std::pair<bool,bullet> shouldMakeBullet(window &win, camera &cam, simpleClock &c
         auto dir = glm::normalize(cam.position - (cam.position - cam.antidirection) ); //camera direction hack
 
         ret.bullet = bull;
-        ret.bullet.setPosition( cam.getPosition() + adjustBulletStart);
+
+        glm::vec3 adjustBulletStart = glm::normalize(cam.antidirection); //przesunięcie odpalenia pocisku pod statek
+        adjustBulletStart *= 12; //strzał z przodu statku
+        glm::vec3 adjustBulletDown = glm::normalize(cam.up); //przesunięcie pod statek
+        adjustBulletDown *= -1.5; //i bardziej na dole po lewej/prawej
+
+        ret.bullet.setPosition( cam.getPosition() + adjustBulletStart + adjustBulletDown);
+        
         ret.bullet.setRotationAngle(object::pitch, cam.pitch);
         ret.bullet.setRotationAngle(object::yaw, -cam.yaw + 270);
         ret.bullet.setRotationAngle(object::roll, 180);
@@ -268,7 +276,7 @@ int main()
 
 //////////
 
-    camera cam({0,0,8});
+    camera cam({0,3,-6});
     simpleClock cl;
     simpleClock shootDelayer;
 
@@ -299,8 +307,8 @@ int main()
     auto shiptex = std::make_shared<texture>("media/Andorian (1).png", true);
     auto missletex = std::make_shared<texture>("media/AIM-9 SIDEWINDER texture2.png", true);
     auto shiptexspec = std::make_shared<texture>("media/Andorian (4).png", true, texture::specular);
-    auto tex2 = std::make_shared<texture>("media/diffuseEx.jpg", false);
-    auto tex2spe = std::make_shared<texture>("media/baspecular.jpg", false, texture::specular);
+    auto tex2 = std::make_shared<texture>("media/SpaceStation/dockmaintexture1.jpg", false);
+    //auto tex2spe = std::make_shared<texture>("media/baspecular.jpg", false, texture::specular);
     auto asteroidtex = std::make_shared<texture>("media/Asteroid/10464_Asteroid_v1_diffuse.jpg", true);
 	
 	//skybox
@@ -316,7 +324,7 @@ int main()
 
     std::cout<<"---Loading Models---"<<std::endl;
     auto shipmodel = std::make_shared<objPrimitive>("media/Quarren Coyote Ship.obj", "./media/", 0.01, 1 << 0);
-    auto zr = std::make_shared<objPrimitive>("media/backpack.obj", "./media/", 1);
+    auto zr = std::make_shared<objPrimitive>("media/SpaceStation/spacedock.obj", "./media/", 2.2);
     auto asteroidmodel = std::make_shared<objPrimitive>("media/Asteroid/10464_Asteroid_v1_Iterations-2.obj", "./media/", 0.0088);
     auto testBullet = std::make_shared<objPrimitive>("media/AIM-9 SIDEWINDER.obj", "./media/", 0.01);
     testBullet->bind();
@@ -339,12 +347,12 @@ int main()
     shiptex->createTexture(GL_RGBA);
     tex2->createTexture();
     asteroidtex->createTexture();
-    tex2spe->createTexture();
+    //tex2spe->createTexture();
     missletex->createTexture(GL_RGB);
     std::cout<<"###Gen done###"<<std::endl;
 
     bakPak.enslaveModel(zr);
-    bakPak.enslaveTex(tex2, tex2spe);
+    bakPak.enslaveTex(tex2/*, tex2spe*/);
 
     ship.enslaveModel(shipmodel);
     ship.enslaveTex(shiptex, shiptexspec);
@@ -373,7 +381,7 @@ int main()
     }
 
     bakPak.setPosition(glm::vec3( 0.0f,  0.0f,  0.0f));
-    bakPak.setRotationAngle(object::whichAngle::roll, 21);	
+    //bakPak.setRotationAngle(object::whichAngle::roll, 21);	
 
 //////////
     win.enableZBuffer(); 
@@ -422,7 +430,7 @@ int main()
 		shp->activate();
 		
         shp->setUniform("actCameraPos", cam.getPosition());
-        shp->setUniform("staticLightPos", glm::vec3(10,0,0));
+        shp->setUniform("staticLightPos", glm::vec3(100,0,0));
         
         //shp->setUniform("dirlight.dir", -cam.antidirection);
 
@@ -430,30 +438,22 @@ int main()
         shp->setUniform("projection", (projection));
 
         shp->setUniform("usesFlashlight", isFlashlight);
-        shp->setUniform("flashlight.pos", cam.getPosition());
+
+        auto flashlightPosOffseted = glm::normalize(cam.antidirection);
+        flashlightPosOffseted *= 8;
+        flashlightPosOffseted += cam.getPosition();
+
+        shp->setUniform("flashlight.pos",  flashlightPosOffseted);  //latarka przed statkiem
         shp->setUniform("flashlight.dir", cam.antidirection);
 
         camSphere.updatePosition(cam.getPosition());
 
-        //ship.setPosition({cam.position.x + cam.antidirection.x + 1, cam.position.y + cam.antidirection.y + 1, cam.position.z + cam.antidirection.z + 1});
-
         
         shp->setUniform("lightColor", glm::vec3(1.0f,1.0f,1.0f));
-
         shp->setUniform("model", bull.getModelMatrix());
         bull.draw();
 
-        shp->setUniform("hasSpecularTex", true);
-            /*model = glm::translate(model, glm::vec3( 0.0f,  0.0f,  -8.0f));
-            //model = glm::rotate(model, (float)glfwGetTime() * glm::radians(50.0f), glm::vec3(-1.0f, -1.0f, -1.0f));
-            //model = glm::rotate(model, (float)glfwGetTime() * glm::radians(50.0f), glm::vec3(-1.0f, -1.0f, -1.0f));  
-            
-            shp->setUniform("model", (model));
-            shp->setUniform("view", (glm::mat4(1.0f))); //XXXX
-            shp->setUniform("projection", (projection));
-            //shp->setUniform("usesTexture", true);
-            shp->setUniform("lightColor", glm::vec3(1.0f,1.0f,1.0f));*/
-		
+        shp->setUniform("hasSpecularTex", true);	
 		shp->setUniform("view", (glm::mat4(1.0f))); //przyklejenie statku do kamery poprzez 1 w view matrix
 		glm::mat4 shipModelMat = glm::mat4(1.0f);
         shipModelMat = glm::translate(shipModelMat, glm::vec3( 0.0f,  0.0f,  -7.0f));
@@ -462,25 +462,17 @@ int main()
 		shp->setUniform("view", (view)); //przywrócenie normalnego view matrix
 		
         shp->setUniform("hasSpecularTex", false);
-
-            //model = glm::rotate(model, (float)glfwGetTime() * glm::radians(50.0f), glm::vec3(-1.0f, -1.0f, -1.0f));  
             
-        //test model
+        //test spaceport/spacestation/spacedock model
         shp->setUniform("model", bakPak.getModelMatrix());
         shp->setUniform("lightColor", glm::vec3(1.0f,1.0f,1.0f));
-        shp->setUniform("hasSpecularTex", true);
-
         bakPak.draw();
-
-        shp->setUniform("hasSpecularTex", false);
 		
         /////
 
         auto potentialBullet = shouldMakeBullet(win, cam, shootDelayer, bull);
         if(potentialBullet.first)
         {
-            /*auto fu = potentialBullet.second.bullet.getPosition();
-            std::cout<<fu.x<<" "<<fu.y<<" "<<fu.z<<std::endl;*/
             bullets.push_back(potentialBullet.second);
         }
 
@@ -511,6 +503,7 @@ int main()
                 i.internal.setRotationAngle( selAngle, i.internal.getRotationAngle(selAngle) + cl.getDelta() * 50 );
                 i.rotCnt--;
             }
+
         }
 
         ///////kolizje
