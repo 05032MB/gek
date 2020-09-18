@@ -67,7 +67,7 @@ float rolldownsTime = 0;
 float scaleGlobal = 20.0;
 float scaleUpDown = 10.0;
 float scalePitchYawRoll = 20.0;
-float scaleStabilize = 1.01;
+float scaleStabilize = 1.02;
 
 //funkcja ruchu w bezwładności
 void moveInertia(GLFWwindow* window, camera &cam){
@@ -272,7 +272,7 @@ int main()
     simpleClock cl;
     simpleClock shootDelayer;
 
-    const unsigned numAst = 10;
+    const unsigned numAst = 50;	//zwiększona liczba asteroid
 	
 	//regular shader
     auto shp = std::make_shared<shaderProgram>();
@@ -356,20 +356,20 @@ int main()
     std::vector<bullet> bullets;
     std::vector<asteroida> asteroids;
 
-    int basepos = 1;
+    int basepos = -10;
     for(auto f = 0; f < numAst; f++)
     {
         asteroida tmp;
 
         tmp.internal.enslaveModel(asteroidmodel);
         tmp.internal.enslaveTex(asteroidtex);
-        tmp.internal.setPosition({basepos + rand() % 13, basepos + rand() % 13, basepos + rand() % 13 });
+        tmp.internal.setPosition({basepos + rand() % 111, basepos + rand() % 111, basepos - rand() % 111 }); //korekta początkowego ułożenia asteroid
         tmp.internal.setRotationAngle(static_cast<object::whichAngle>(rand() % 3), rand() % 360);
         tmp.dlaKuli.updatePosition(tmp.internal.getPosition());
         //tmp.dlaGracza.setRadius(6);
         asteroids.push_back(tmp);
 
-        basepos += rand() % 3 + 15;
+        basepos -= ((rand() % 15) + 5);
     }
 
     bakPak.setPosition(glm::vec3( 0.0f,  0.0f,  0.0f));
@@ -548,7 +548,7 @@ int main()
 
             if(unlikely(isThere.first != -1))   //do strzelania dochodzi statystycznie żadko
             {
-                auto spawn = rand() % 3 + 1;
+                auto spawn = rand() % 3 + 2;
                 auto &delCandidate = asteroids[isThere.second];
 
                 while(spawn-- && delCandidate.tty > 0)
@@ -557,14 +557,14 @@ int main()
 
                     tmp.internal.enslaveModel(asteroidmodel);
                     tmp.internal.enslaveTex(asteroidtex);
-                    tmp.internal.setPosition({delCandidate.internal.getPosition().x + rand() % 3, 
-                                              delCandidate.internal.getPosition().y + rand() % 3, 
-                                              delCandidate.internal.getPosition().z + rand() % 3 });
+                    tmp.internal.setPosition({delCandidate.internal.getPosition().x + 1 + rand() % 3, 
+                                              delCandidate.internal.getPosition().y + 1 + rand() % 3, 
+                                              delCandidate.internal.getPosition().z + 1 + rand() % 3 });
 
                     tmp.internal.setRotationAngle(static_cast<object::whichAngle>(rand() % 3), rand() % 360);
                     tmp.tty = delCandidate.tty - 1;
                     tmp.internal.setScale(0.2 + 0.1 * tmp.tty);
-                    tmp.rotCnt = 200;
+                    tmp.rotCnt = 30000;	//zwiększona liczba obrotów po trafieniu
                     tmp.dlaKuli.updatePosition(tmp.internal.getPosition());
                     tmp.dlaKuli.setRadius(tmp.dlaKuli.getRadius() * tmp.internal.getScale());
                     asteroids.push_back(tmp);
