@@ -49,6 +49,7 @@ struct asteroida
     short tty{2};
     short rotCnt{0};
     glm::vec3 movAnimDir;
+    simpleClock explTime;
 };
 //zmienne globalne aktualnego przyspieszenia w danym kierunku
 float forwardsTime = 0;
@@ -155,9 +156,6 @@ void processInput(window &win, iCameraStandardOps &cam, simpleClock &cl, object 
 
 }
 
-//glm::vec3 adjustBulletStart = glm::vec3(0.0f,0.0f,9.0f);
-//trzeba dobrac odpowiednie parametry
-
 std::pair<bool,bullet> shouldMakeBullet(window &win, camera &cam, simpleClock &cl, object &bull)
 {
     auto window = win();
@@ -169,7 +167,6 @@ std::pair<bool,bullet> shouldMakeBullet(window &win, camera &cam, simpleClock &c
     {
         if(fireDelay > cl.getDiff())
         {
-            //std::cout<<"Insuff diff "<<cl.getDiff()<<std::endl;
             return {false, bullet()};
         }
         cl.freezeTimestamp();
@@ -284,8 +281,9 @@ int main()
 	
 	//regular shader
     auto shp = std::make_shared<shaderProgram>();
-    shp->enslaveShader(std::make_shared<shader>("src/shaderz/vertex/vertex3dWithLightning.glsl", GL_VERTEX_SHADER),
-                        std::make_shared<shader>("src/shaderz/fragment/fragmentWithLightning2.glsl", GL_FRAGMENT_SHADER));
+    shp->enslaveShader(std::make_shared<shader>("src/shaderz/vertex/vertex3dWithLightningForGeo.glsl", GL_VERTEX_SHADER),
+                        std::make_shared<shader>("src/shaderz/fragment/fragmentWithLightning2.glsl", GL_FRAGMENT_SHADER),
+                        std::make_shared<shader>("src/shaderz/geometry/explosion.glsl", GL_GEOMETRY_SHADER));
     shp->compile();
     shp->cull();
     shp->activate();
@@ -324,7 +322,7 @@ int main()
 
     std::cout<<"---Loading Models---"<<std::endl;
     auto shipmodel = std::make_shared<objPrimitive>("media/Quarren Coyote Ship.obj", "./media/", 0.01, 1 << 0);
-    auto zr = std::make_shared<objPrimitive>("media/SpaceStation/spacedock.obj", "./media/", 2.2);
+    auto zr = std::make_shared<objPrimitive>("media/SpaceStation/spacedock_decimated_it2.obj", "./media/", 2.2);
     auto asteroidmodel = std::make_shared<objPrimitive>("media/Asteroid/10464_Asteroid_v1_Iterations-2.obj", "./media/", 0.0088);
     auto testBullet = std::make_shared<objPrimitive>("media/AIM-9 SIDEWINDER.obj", "./media/", 0.01);
     testBullet->bind();
@@ -347,12 +345,11 @@ int main()
     shiptex->createTexture(GL_RGBA);
     tex2->createTexture();
     asteroidtex->createTexture();
-    //tex2spe->createTexture();
     missletex->createTexture(GL_RGB);
     std::cout<<"###Gen done###"<<std::endl;
 
     bakPak.enslaveModel(zr);
-    bakPak.enslaveTex(tex2/*, tex2spe*/);
+    bakPak.enslaveTex(tex2);
 
     ship.enslaveModel(shipmodel);
     ship.enslaveTex(shiptex, shiptexspec);
@@ -360,9 +357,10 @@ int main()
     object bull;
     bull.enslaveModel(testBullet);
     bull.enslaveTex(missletex);
+    std::cout<<"###Enslaving resources done###"<<std::endl;
 
     std::vector<bullet> bullets;
-    std::vector<asteroida> asteroids;
+    std::vector<asteroida> asteroids, explodedAsteroids;
 
     int basepos = -10;
     for(auto f = 0; f < numAst; f++)
@@ -379,8 +377,9 @@ int main()
 
         basepos -= ((rand() % 15) + 5);
     }
+    std::cout<<"###Gen asteroids done###"<<std::endl;
 
-    bakPak.setPosition(glm::vec3( 0.0f,  0.0f,  0.0f));
+    //bakPak.setPosition(glm::vec3( 0.0f,  0.0f,  0.0f));
     //bakPak.setRotationAngle(object::whichAngle::roll, 21);	
 
 //////////
@@ -399,6 +398,10 @@ int main()
     shp->setUniform("flashlight.diffuse", glm::vec3(0.2, 0.2, 0.2));
     shp->setUniform("flashlight.ambient", glm::vec3(1.0, 1.0, 1.0));
     shp->setUniform("flashlight.specular", glm::vec3(0.8, 0.8, 0.8));
+
+    shp->setUniform("ambientLight", 0.35f);
+
+    std::cout<<"!!!Loading done!!!"<<std::endl;
 
     while(!win.shouldClose())
     {
@@ -448,11 +451,6 @@ int main()
 
         camSphere.updatePosition(cam.getPosition());
 
-        
-        shp->setUniform("lightColor", glm::vec3(1.0f,1.0f,1.0f));
-        shp->setUniform("model", bull.getModelMatrix());
-        bull.draw();
-
         shp->setUniform("hasSpecularTex", true);	
 		shp->setUniform("view", (glm::mat4(1.0f))); //przyklejenie statku do kamery poprzez 1 w view matrix
 		glm::mat4 shipModelMat = glm::mat4(1.0f);
@@ -465,13 +463,13 @@ int main()
             
         //test spaceport/spacestation/spacedock model
         shp->setUniform("model", bakPak.getModelMatrix());
-        shp->setUniform("lightColor", glm::vec3(1.0f,1.0f,1.0f));
+        shp->setUniform("lightColor", glm::vec3(1.0f,0.95f,0.9f));
         bakPak.draw();
 		
         /////
 
         auto potentialBullet = shouldMakeBullet(win, cam, shootDelayer, bull);
-        if(potentialBullet.first)
+        if(unlikely(potentialBullet.first))
         {
             bullets.push_back(potentialBullet.second);
         }
@@ -491,6 +489,25 @@ int main()
             shp->setUniform("model", i.internal.getModelMatrix() );
             shp->setUniform("lightColor", glm::vec3(1.0f,1.0f,1.0f));
             i.internal.draw();
+        }
+        //pętla asteroidów "eksplodowanych"
+        for (int i = 0; i < explodedAsteroids.size(); i++)
+        {
+            auto &f = explodedAsteroids[i];
+
+            f.explTime.tick();
+            shp->setUniform("lightColor", glm::vec3(1.0f,1.0f,1.0f));
+            shp->setUniform("model", f.internal.getModelMatrix() );
+            shp->setUniform("expltime", f.explTime.getLifetime());
+            f.internal.draw();
+            shp->setUniform("expltime", 0.0f);
+
+            //usuwanie starych asteroidów
+            if(f.explTime.getLifetime() > 60)
+            {
+                explodedAsteroids.erase(explodedAsteroids.begin() + i);
+                i--;
+            }
         }
         ///////
 
@@ -539,7 +556,7 @@ int main()
         do{
             isThere = astBullCollCb();
 
-            if(unlikely(isThere.first != -1))   //do strzelania dochodzi statystycznie żadko
+            if(unlikely(isThere.first != -1))   //do strzelania dochodzi statystycznie rzadko
             {
                 auto spawn = rand() % 3 + 2;
                 auto &delCandidate = asteroids[isThere.second];
@@ -563,6 +580,10 @@ int main()
                     asteroids.push_back(tmp);
                 }
 
+                //przeniesienie asteroidy do "eksplodowanych". Wtedy nie ma modelu kolizji, jest tylko efekt rozpadania.
+                delCandidate.explTime.reset();
+                explodedAsteroids.insert(explodedAsteroids.end(), std::move(asteroids.at( isThere.second ) ) );
+                
                 bullets.erase(bullets.begin() + isThere.first);
                 asteroids.erase(asteroids.begin() + isThere.second);
             }
@@ -574,6 +595,12 @@ int main()
         }); //usuń pociski daleko od środka mapy
 
         ////////
+
+        if(asteroids.empty())
+        {
+            std::cout<<"Zniszczyles wszystkie asteroidy w czasie: "<<cl.getLifetime()<<" sekund."<<std::endl;
+            glfwSetWindowShouldClose(win(), true);
+        }
 
         if(auto err = glGetError() != GL_NO_ERROR)std::cout<<"[GL Error]: "<<err<<std::endl;
 

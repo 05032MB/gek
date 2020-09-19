@@ -18,6 +18,13 @@ class simpleClockM
     public:
         simpleClockM() = default;
 
+        void reset()
+        {
+            lastFrame = glfwGetTime();
+            deltaTime = 0;
+            timestamp = 0;
+            all = 0;
+        }
         void tick()
         {
             auto currentFrame = glfwGetTime();

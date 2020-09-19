@@ -15,7 +15,7 @@ LIBZ+= -lGL -lglfw -lGLEW
 endif
 
 all: $(SRCZ) $(HDRZ)
-	$(CXX) $(SRCZ) -o $(TRGT) -std=c++17 -g $(INC) $(CUSTODEPMBUILD) $(LIBZ)
+	$(CXX) $(SRCZ) -o $(TRGT) -std=c++17 -O3 $(INC) $(CUSTODEPMBUILD) $(LIBZ)
 
 run: all
 	./$(TRGT)
