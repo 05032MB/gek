@@ -66,7 +66,7 @@ float rollupsTime = 0;
 float rolldownsTime = 0;
 
 //modyfikatory przyspieszenia
-float scaleGlobal = 20.0;
+float scaleGlobal = 10.0;
 float scaleUpDown = 10.0;
 float scalePitchYawRoll = 20.0;
 float scaleStabilize = 1.02;
@@ -273,7 +273,7 @@ int main()
 
 //////////
 
-    camera cam({0,3,-6});
+    camera cam({0,3,4});
     simpleClock cl;
     simpleClock shootDelayer;
 
@@ -379,8 +379,7 @@ int main()
     }
     std::cout<<"###Gen asteroids done###"<<std::endl;
 
-    //bakPak.setPosition(glm::vec3( 0.0f,  0.0f,  0.0f));
-    //bakPak.setRotationAngle(object::whichAngle::roll, 21);	
+    bakPak.setRotationAngle(object::whichAngle::yaw, 180);	
 
 //////////
     win.enableZBuffer(); 
@@ -441,25 +440,13 @@ int main()
         shp->setUniform("projection", (projection));
 
         shp->setUniform("usesFlashlight", isFlashlight);
-
         auto flashlightPosOffseted = glm::normalize(cam.antidirection);
         flashlightPosOffseted *= 8;
         flashlightPosOffseted += cam.getPosition();
-
         shp->setUniform("flashlight.pos",  flashlightPosOffseted);  //latarka przed statkiem
         shp->setUniform("flashlight.dir", cam.antidirection);
 
         camSphere.updatePosition(cam.getPosition());
-
-        shp->setUniform("hasSpecularTex", true);	
-		shp->setUniform("view", (glm::mat4(1.0f))); //przyklejenie statku do kamery poprzez 1 w view matrix
-		glm::mat4 shipModelMat = glm::mat4(1.0f);
-        shipModelMat = glm::translate(shipModelMat, glm::vec3( 0.0f,  0.0f,  -7.0f));
-        shp->setUniform("model", shipModelMat);
-        ship.draw();
-		shp->setUniform("view", (view)); //przywrócenie normalnego view matrix
-		
-        shp->setUniform("hasSpecularTex", false);
             
         //test spaceport/spacestation/spacedock model
         shp->setUniform("model", bakPak.getModelMatrix());
@@ -510,6 +497,15 @@ int main()
             }
         }
         ///////
+
+        shp->setUniform("hasSpecularTex", true);	
+		shp->setUniform("view", (glm::mat4(1.0f))); //przyklejenie statku do kamery poprzez 1 w view matrix
+		glm::mat4 shipModelMat = glm::mat4(1.0f);
+        shipModelMat = glm::translate(shipModelMat, glm::vec3( 0.0f,  0.0f,  -7.0f));
+        shp->setUniform("model", shipModelMat);
+        ship.draw();
+		shp->setUniform("view", (view)); //przywrócenie normalnego view matrix
+        shp->setUniform("hasSpecularTex", false);
 
         ///////animacje asteroid
         for(auto &i : asteroids)
