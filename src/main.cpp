@@ -344,7 +344,7 @@ int main()
     simpleClock cl;
     simpleClock shootDelayer;
 
-    const unsigned numAst = 50;	//zwiększona liczba asteroid
+    const unsigned numAst = 20;	//zwiększona liczba asteroid
 	
 	//regular shader
     auto shp = std::make_shared<shaderProgram>();
@@ -370,6 +370,14 @@ int main()
     par_shp->compile();
     par_shp->cull();
     //par_shp->activate();
+	
+	//environment mapping shader
+	auto envmap_shp = std::make_shared<shaderProgram>();
+    envmap_shp->enslaveShader(std::make_shared<shader>("src/shaderz/vertex/vertexEnvMap.glsl", GL_VERTEX_SHADER),
+                        std::make_shared<shader>("src/shaderz/fragment/fragmentEnvMap.glsl", GL_FRAGMENT_SHADER));
+    envmap_shp->compile();
+    envmap_shp->cull();
+    //envmap_shp->activate();
 
     object bakPak, ship;
 
@@ -408,8 +416,8 @@ int main()
     glBindVertexArray(skyboxVAO);
     glBindBuffer(GL_ARRAY_BUFFER, skyboxVBO);
     glBufferData(GL_ARRAY_BUFFER, sizeof(skyboxVertices), &skyboxVertices, GL_STATIC_DRAW);
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+    glEnableVertexAttribArray(6);
+    glVertexAttribPointer(6, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
 	
     std::cout<<"###Models done###"<<std::endl;
 
@@ -535,9 +543,30 @@ int main()
 		glDepthMask(GL_TRUE);
 		shp->activate();
 		
+		//environment mapping
+		//test spaceport/spacestation/spacedock model
+		envmap_shp->activate();
+		glBindVertexArray(skyboxVAO);
+		glBindTexture(GL_TEXTURE_CUBE_MAP, skytex);
+		
+        envmap_shp->setUniform("model", bakPak.getModelMatrix());
+		envmap_shp->setUniform("projection", (projection));
+		envmap_shp->setUniform("view", cam.getViewMatrix());
+		envmap_shp->setUniform("cameraPos", cam.getPosition());
+        bakPak.draw();
+		/* statek lustro
+		envmap_shp->setUniform("view", (glm::mat4(1.0f))); //przyklejenie statku do kamery poprzez 1 w view matrix
+		glm::mat4 shipModelMat = glm::mat4(1.0f);
+        shipModelMat = glm::translate(shipModelMat, glm::vec3( 0.0f,  0.0f,  -7.0f));
+        envmap_shp->setUniform("model", shipModelMat);
+        ship.draw();
+		*/
+		shp->activate();
+		
 		//pozycja światła
         shp->setUniform("actCameraPos", cam.getPosition());
         shp->setUniform("staticLightPos", glm::vec3(100,0,0));
+		shp->setUniform("lightColor", glm::vec3(1.0f,0.95f,0.9f));
         
         //shp->setUniform("dirlight.dir", -cam.antidirection);
 
@@ -552,13 +581,8 @@ int main()
         shp->setUniform("flashlight.dir", cam.antidirection);
 
         camSphere.updatePosition(cam.getPosition());
-            
-        //test spaceport/spacestation/spacedock model
-        shp->setUniform("model", bakPak.getModelMatrix());
-        shp->setUniform("lightColor", glm::vec3(1.0f,0.95f,0.9f));
-        bakPak.draw();
-		
-        /////
+        
+        /////		
 
         auto potentialBullet = shouldMakeBullet(win, cam, shootDelayer, bull);
         if(unlikely(potentialBullet.first))
@@ -603,12 +627,14 @@ int main()
         }
         ///////
 
-        shp->setUniform("hasSpecularTex", true);	
+        shp->setUniform("hasSpecularTex", true);
+		//### statek lustro	###	
 		shp->setUniform("view", (glm::mat4(1.0f))); //przyklejenie statku do kamery poprzez 1 w view matrix
 		glm::mat4 shipModelMat = glm::mat4(1.0f);
         shipModelMat = glm::translate(shipModelMat, glm::vec3( 0.0f,  0.0f,  -7.0f));
         shp->setUniform("model", shipModelMat);
         ship.draw();
+		//### statek lustro ###
 		shp->setUniform("view", (view)); //przywrócenie normalnego view matrix
         shp->setUniform("hasSpecularTex", false);
 
