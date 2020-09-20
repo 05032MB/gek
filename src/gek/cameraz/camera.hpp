@@ -35,7 +35,7 @@ class camera : public iCameraStandardOps
 
     float zoom{45.0f};
 
-    camera(glm::vec3 position = {0.0f, 0.0f, 0.0f}, glm::vec3 up = {0.0f, 1.0f, 0.0f}, float yaw = 90, float pitch = 0)
+    camera(glm::vec3 position = {0.0f, 0.0f, 0.0f}, glm::vec3 up = {0.0f, 1.0f, 0.0f}, float yaw = -90, float pitch = 0)
     {
         this->position = position;
         this->absoluteUp = up;
