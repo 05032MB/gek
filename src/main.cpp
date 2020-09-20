@@ -384,12 +384,12 @@ int main()
     //auto tex2spe = std::make_shared<texture>("media/baspecular.jpg", false, texture::specular);
     auto asteroidtex = std::make_shared<texture>("media/Asteroid/10464_Asteroid_v1_diffuse.jpg", true);
 	//skybox
-	std::vector<std::string> sky_faces = {"media/Skybox/right.png", 
-									"media/Skybox/left.png",
-									"media/Skybox/top.png",
-									"media/Skybox/bottom.png",
-									"media/Skybox/front.png",
-									"media/Skybox/back.png"};
+	std::vector<std::string> sky_faces = {"media/Skybox2/right.png", 
+									"media/Skybox2/left.png",
+									"media/Skybox2/top.png",
+									"media/Skybox2/bottom.png",
+									"media/Skybox2/front.png",
+									"media/Skybox2/back.png"};
 	unsigned int skytex = loadSkybox(sky_faces);
 	
     std::cout<<"###Texs done###"<<std::endl;
@@ -537,7 +537,7 @@ int main()
 		
 		//pozycja światła
         shp->setUniform("actCameraPos", cam.getPosition());
-        shp->setUniform("staticLightPos", glm::vec3(100,0,0));
+        shp->setUniform("staticLightPos", glm::vec3(4370,4500,7780));
         
         //shp->setUniform("dirlight.dir", -cam.antidirection);
 
