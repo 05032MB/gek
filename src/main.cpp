@@ -456,7 +456,6 @@ int main()
 
 
     bakPak.setPosition(glm::vec3( 0.0f,  0.0f,  0.0f));
-    bakPak.setRotationAngle(object::whichAngle::roll, 21);
     bakPak.setRotationAngle(object::whichAngle::yaw, 180);
 	
 	//INICJALIZACJA SYSTEMU CZĄSTECZEK
