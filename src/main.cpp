@@ -23,6 +23,7 @@
 #include <gek/collisionSphere.hpp>
 #include <gek/object.hpp>
 #include <gek/skybox_vertices.h>
+#include <gek/particle_vertices.h>
 
 using namespace GEK;
 
@@ -49,25 +50,51 @@ struct asteroida
     short tty{2};
     short rotCnt{0};
 };
+
+//cząsteczka
+struct Particle
+{
+		glm::vec3 position;
+		float lifetime;
+};
+
 //zmienne globalne aktualnego przyspieszenia w danym kierunku
-float forwardsTime = 0;
-float backwardsTime = 0;
-float leftsTime = 0;
-float rightsTime = 0;
-float upsTime = 0;
-float downsTime = 0;
-float pitchupsTime = 0;
-float pitchdownsTime = 0;
-float yawupsTime = 0;
-float yawdownsTime = 0;
-float rollupsTime = 0;
-float rolldownsTime = 0;
+float forwardsTime = 0.0f;
+float backwardsTime = 0.0f;
+float leftsTime = 0.0f;
+float rightsTime = 0.0f;
+float upsTime = 0.0f;
+float downsTime = 0.0f;
+float pitchupsTime = 0.0f;
+float pitchdownsTime = 0.0f;
+float yawupsTime = 0.0f;
+float yawdownsTime = 0.0f;
+float rollupsTime = 0.0f;
+float rolldownsTime = 0.0f;
 
 //modyfikatory przyspieszenia
 float scaleGlobal = 20.0;
 float scaleUpDown = 10.0;
 float scalePitchYawRoll = 20.0;
 float scaleStabilize = 1.02;
+
+//współczynniki mocy i kierunku silników
+float forwardPerSpeed = 0.0f;
+float pitchPerSpeed = 0.0f;
+float turnPerSpeed = 0.0f;
+
+//czasy przytrzymania klawiszy ruchu;
+float scaleNotPressed = 1.02f;
+float W_time = 0.0f;
+float S_time = 0.0f;
+float A_time = 0.0f;
+float D_time = 0.0f;
+float O_time = 0.0f;
+float P_time = 0.0f;
+float K_time = 0.0f;
+float L_time = 0.0f;
+float Z_time = 0.0f;
+float X_time = 0.0f;
 
 //funkcja ruchu w bezwładności
 void moveInertia(GLFWwindow* window, camera &cam){
@@ -107,28 +134,58 @@ void processInput(window &win, iCameraStandardOps &cam, simpleClock &cl, object 
     auto deltaTime = cl.getDelta();
 	deltaTime /= scaleGlobal;
 
-    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS){
 		forwardsTime += deltaTime;
-    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+		W_time += deltaTime;
+	} else
+		W_time /= scaleNotPressed;
+    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS){
         backwardsTime += deltaTime;
-    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+		S_time += deltaTime;
+	} else
+		S_time /= scaleNotPressed;
+    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS){
         leftsTime += deltaTime;
-    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+		A_time += deltaTime;
+	} else
+		A_time /= scaleNotPressed;
+    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS){
         rightsTime += deltaTime;
-    if (glfwGetKey(window, GLFW_KEY_Z) == GLFW_PRESS)
+		D_time += deltaTime;
+	} else
+		D_time /= scaleNotPressed;
+    if (glfwGetKey(window, GLFW_KEY_Z) == GLFW_PRESS){
         upsTime += deltaTime/scaleUpDown;
-    if (glfwGetKey(window, GLFW_KEY_X) == GLFW_PRESS)
+		Z_time += deltaTime/scaleUpDown;
+	} else
+		Z_time /= scaleNotPressed;
+    if (glfwGetKey(window, GLFW_KEY_X) == GLFW_PRESS){
         downsTime += deltaTime/scaleUpDown;
+		X_time += deltaTime/scaleUpDown;
+	} else
+		X_time /= scaleNotPressed;
     
-    if (glfwGetKey(window, GLFW_KEY_O) == GLFW_PRESS)
+    if (glfwGetKey(window, GLFW_KEY_O) == GLFW_PRESS){
         pitchupsTime += deltaTime/scalePitchYawRoll;
-    if (glfwGetKey(window, GLFW_KEY_P) == GLFW_PRESS)
+		O_time += deltaTime/scalePitchYawRoll;
+	} else
+		O_time /= scaleNotPressed;
+    if (glfwGetKey(window, GLFW_KEY_P) == GLFW_PRESS){
         pitchdownsTime += deltaTime/scalePitchYawRoll;
+		P_time += deltaTime/scalePitchYawRoll;
+	} else
+		P_time /= scaleNotPressed;
    
-    if (glfwGetKey(window, GLFW_KEY_L) == GLFW_PRESS)
+    if (glfwGetKey(window, GLFW_KEY_L) == GLFW_PRESS){
         yawupsTime += deltaTime/scalePitchYawRoll;
-    if (glfwGetKey(window, GLFW_KEY_K) == GLFW_PRESS)
+		L_time += deltaTime/scalePitchYawRoll;
+	} else
+		L_time /= scaleNotPressed;
+    if (glfwGetKey(window, GLFW_KEY_K) == GLFW_PRESS){
         yawdownsTime += deltaTime/scalePitchYawRoll;
+		K_time += deltaTime/scalePitchYawRoll;
+	} else
+		K_time /= scaleNotPressed;
 	/*
 	if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
 		rollupsTime += deltaTime/scalePitchYawRoll;
@@ -150,6 +207,16 @@ void processInput(window &win, iCameraStandardOps &cam, simpleClock &cl, object 
 		yawdownsTime /= scaleStabilize;
 		//rollupsTime /= scaleStabilize;
 		//rolldownsTime /= scaleStabilize;
+		W_time /= scaleStabilize;
+		S_time /= scaleStabilize;
+		A_time /= scaleStabilize;
+		D_time /= scaleStabilize;
+		O_time /= scaleStabilize;
+		P_time /= scaleStabilize;
+		K_time /= scaleStabilize;
+		L_time /= scaleStabilize;
+		Z_time /= scaleStabilize;
+		X_time /= scaleStabilize;
 	}
 
 }
@@ -246,7 +313,7 @@ unsigned int loadSkybox(std::vector<std::string> faces)
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
 
     return textureID;
-} 
+}
 
 int main()
 {
@@ -288,7 +355,15 @@ int main()
                         std::make_shared<shader>("src/shaderz/fragment/fragmentSky.glsl", GL_FRAGMENT_SHADER));
     sky_shp->compile();
     sky_shp->cull();
-    sky_shp->activate();
+    //sky_shp->activate();
+	
+	//particle shader
+	auto par_shp = std::make_shared<shaderProgram>();
+    par_shp->enslaveShader(std::make_shared<shader>("src/shaderz/vertex/vertexParticles.glsl", GL_VERTEX_SHADER),
+                        std::make_shared<shader>("src/shaderz/fragment/fragmentParticles.glsl", GL_FRAGMENT_SHADER));
+    par_shp->compile();
+    par_shp->cull();
+    //par_shp->activate();
 
     object bakPak, ship;
 
@@ -302,7 +377,6 @@ int main()
     auto tex2 = std::make_shared<texture>("media/diffuseEx.jpg", false);
     auto tex2spe = std::make_shared<texture>("media/baspecular.jpg", false, texture::specular);
     auto asteroidtex = std::make_shared<texture>("media/Asteroid/10464_Asteroid_v1_diffuse.jpg", true);
-	
 	//skybox
 	std::vector<std::string> sky_faces = {"media/Skybox/right.png", 
 									"media/Skybox/left.png",
@@ -330,6 +404,7 @@ int main()
     glBufferData(GL_ARRAY_BUFFER, sizeof(skyboxVertices), &skyboxVertices, GL_STATIC_DRAW);
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+	
     std::cout<<"###Models done###"<<std::endl;
 
     std::cout<<"---Generating texs and models---"<<std::endl;
@@ -373,7 +448,33 @@ int main()
     }
 
     bakPak.setPosition(glm::vec3( 0.0f,  0.0f,  0.0f));
-    bakPak.setRotationAngle(object::whichAngle::roll, 21);	
+    bakPak.setRotationAngle(object::whichAngle::roll, 21);
+	
+	//INICJALIZACJA SYSTEMU CZĄSTECZEK
+	unsigned int const nr_particles = 1200;
+	float particlePositions[4*nr_particles]; //4x nr_particles
+	std::vector<Particle> particles(nr_particles);
+	int sign;
+	for ( unsigned int i = 0; i < particles.size(); i++ ){
+		if(i % 2 == 0)
+			sign = 1;
+		else
+			sign = -1;
+		particles[i].position = glm::vec3(
+				((((float) rand()) / ((float) RAND_MAX)) / 4.0f + (1.7f * sign) ),
+				((((float) rand()) / ((float) RAND_MAX)) / 4.0f - 0.9f ),
+				((((float) rand()) / ((float) RAND_MAX)) / 4.0f + 0.4f));
+				particles[i].lifetime = ((((float) rand()) / ((float) RAND_MAX)) / 3.0f);
+	}
+	
+	unsigned int particleVBO; 	//bufor wierzchołków
+	unsigned int particlePBO;	//bufor pozycji
+	glGenBuffers(1, &particleVBO);
+    glBindBuffer(GL_ARRAY_BUFFER, particleVBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(particleVertices), particleVertices, GL_STATIC_DRAW);
+	glGenBuffers(1, &particlePBO);
+	glBindBuffer(GL_ARRAY_BUFFER, particlePBO);
+    glBufferData(GL_ARRAY_BUFFER, particles.size() * 4 * sizeof(float), particlePositions, GL_DYNAMIC_DRAW);
 
 //////////
     win.enableZBuffer(); 
@@ -421,6 +522,7 @@ int main()
 		glDepthMask(GL_TRUE);
 		shp->activate();
 		
+		//pozycja światła
         shp->setUniform("actCameraPos", cam.getPosition());
         shp->setUniform("staticLightPos", glm::vec3(10,0,0));
         
@@ -580,6 +682,65 @@ int main()
             return b.colsp.collidesOrIsWithin(megaSphere9);
         }); //usuń pociski daleko od środka mapy
 
+		//AKTUALIZACJA SYSTEMU CZĄSTECZEK
+		float delta = cl.getDelta();
+		//korekcja współczynników mocy i kirunku silników
+		if(W_time == 0.0f || S_time >= W_time)
+			forwardPerSpeed = 0.0f;
+		else
+			forwardPerSpeed = (W_time - S_time);
+		pitchPerSpeed = (O_time - P_time) + (Z_time - X_time) / scaleUpDown;
+		turnPerSpeed = ((L_time - K_time) + (D_time - A_time) / scalePitchYawRoll) / 2.0f;
+		
+		for ( unsigned int i = 0; i < particles.size(); i++ ){
+			if(i % 2 == 0) //co druga cząsteczka z prawego/lewego silnika
+				sign = 1;
+			else
+				sign = -1; 
+			particles[i].lifetime -= delta;
+			if( particles[i].lifetime <= 0.0f ){
+				particles[i].position = glm::vec3(
+				((((float) rand()) / ((float) RAND_MAX)) / 4.0f + (1.7f * sign) ),
+				((((float) rand()) / ((float) RAND_MAX)) / 4.0f - 0.9f ),
+				((((float) rand()) / ((float) RAND_MAX)) / 4.0f + 0.4f));
+				particles[i].lifetime = ((((float) rand()) / ((float) RAND_MAX))/3.0f + 5.0f * forwardPerSpeed );
+			}
+			particles[i].position += glm::vec3( -turnPerSpeed, -pitchPerSpeed, delta * 1.2f + 0.1f * forwardPerSpeed );
+			particlePositions[i*4+0] = particles[i].position[0];
+			particlePositions[i*4+1] = particles[i].position[1];
+			particlePositions[i*4+2] = particles[i].position[2];
+			particlePositions[i*4+3] = particles[i].lifetime;
+		}
+		
+		//RYSOWANIE CZĄSTECZEK
+		par_shp->activate();
+		
+		//aktualizacja bufora pozycji
+		glBindBuffer( GL_ARRAY_BUFFER, particlePBO );
+		glBufferSubData( GL_ARRAY_BUFFER, 0, particles.size() * 4 * sizeof(float), particlePositions );
+		
+		//bufor wierzchołków
+		glEnableVertexAttribArray(4);
+		glBindBuffer( GL_ARRAY_BUFFER, particleVBO );
+		glVertexAttribPointer( 4, 3, GL_FLOAT, GL_FALSE, 0, (void*)0 );
+		
+		//bufor pozycji
+		glEnableVertexAttribArray(5);
+		glBindBuffer( GL_ARRAY_BUFFER, particlePBO );
+		glVertexAttribPointer( 5, 4, GL_FLOAT, GL_FALSE, 0, (void*)0 );
+		
+		glVertexAttribDivisor( 4, 0 );
+		glVertexAttribDivisor( 5, 1 );
+		
+		//rysowanie cząsteczek
+		par_shp->setUniform("model", shipModelMat);
+		//par_shp->setUniform("view", view);
+		par_shp->setUniform("view", glm::mat4(1.0f));
+		par_shp->setUniform("projection", projection);
+		par_shp->setUniform("particleSize", 0.01f);	//rozmiar cząsteczek
+		glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 4, particles.size());
+		glDisableVertexAttribArray(4);
+		glDisableVertexAttribArray(5);
         ////////
 
         if(auto err = glGetError() != GL_NO_ERROR)std::cout<<"[GL Error]: "<<err<<std::endl;
