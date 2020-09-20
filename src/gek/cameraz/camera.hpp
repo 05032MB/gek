@@ -107,6 +107,9 @@ class camera : public iCameraStandardOps
                 break;
         }
 
+        if(pitch >= 89)pitch = 89;
+        else if(pitch <= -89)pitch = -89;
+
         updateCameraVectors();
     }
 
