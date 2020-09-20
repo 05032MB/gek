@@ -447,6 +447,7 @@ int main()
         tmp.internal.setPosition({basepos + rand() % 111, basepos + rand() % 111, basepos - rand() % 111 }); //korekta początkowego ułożenia asteroid
         tmp.internal.setRotationAngle(static_cast<object::whichAngle>(rand() % 3), rand() % 360);
         tmp.dlaKuli.updatePosition(tmp.internal.getPosition());
+        tmp.movAnimDir = {rand() % 2, rand() % 2, rand() % 2}; //znormalizowany wektor kierunku ruchu
         //tmp.dlaGracza.setRadius(6);
         asteroids.push_back(tmp);
 
@@ -521,7 +522,7 @@ int main()
         win.clearScreen();
 
         view  = cam.getViewMatrix();
-        projection = glm::perspective(glm::radians(cam.zoom), (float)win.width() / (float)win.height(), 0.1f, 500.0f);
+        projection = glm::perspective(glm::radians(cam.zoom), (float)win.width() / (float)win.height(), 0.1f, 1000.0f);
 		
 		//skybox
 		glDepthMask(GL_FALSE);
@@ -594,7 +595,7 @@ int main()
             shp->setUniform("expltime", 0.0f);
 
             //usuwanie starych asteroidów
-            if(f.explTime.getLifetime() > 60)
+            if(f.explTime.getLifetime() > 15)
             {
                 explodedAsteroids.erase(explodedAsteroids.begin() + i);
                 i--;
@@ -611,7 +612,7 @@ int main()
 		shp->setUniform("view", (view)); //przywrócenie normalnego view matrix
         shp->setUniform("hasSpecularTex", false);
 
-        ///////animacje asteroid
+        ///////animacje/ruch asteroid
         for(auto &i : asteroids)
         {
             if(i.rotCnt > 0)
@@ -619,6 +620,14 @@ int main()
                 auto selAngle = static_cast<object::whichAngle>(rand() % 3);
                 i.internal.setRotationAngle( selAngle, i.internal.getRotationAngle(selAngle) + cl.getDelta() * 50 );
                 i.rotCnt--;
+            }
+            //powolny ruch asteroidy
+            const float animMoveSpeed = 0.7f; //prędkość poruszania się asteroid
+            if(i.movAnimDir.x != 0 || i.movAnimDir.y != 0 || i.movAnimDir.z != 0)
+            {
+                i.internal.setPosition(i.internal.getPosition() + i.movAnimDir * animMoveSpeed * cl.getDelta());
+                i.dlaKuli.updatePosition(i.internal.getPosition());
+                i.dlaGracza.updatePosition(i.internal.getPosition());
             }
 
         }
