@@ -392,12 +392,12 @@ int main()
     //auto tex2spe = std::make_shared<texture>("media/baspecular.jpg", false, texture::specular);
     auto asteroidtex = std::make_shared<texture>("media/Asteroid/10464_Asteroid_v1_diffuse.jpg", true);
 	//skybox
-	std::vector<std::string> sky_faces = {"media/Skybox/right.png", 
-									"media/Skybox/left.png",
-									"media/Skybox/top.png",
-									"media/Skybox/bottom.png",
-									"media/Skybox/front.png",
-									"media/Skybox/back.png"};
+	std::vector<std::string> sky_faces = {"media/Skybox2/right.png", 
+									"media/Skybox2/left.png",
+									"media/Skybox2/top.png",
+									"media/Skybox2/bottom.png",
+									"media/Skybox2/front.png",
+									"media/Skybox2/back.png"};
 	unsigned int skytex = loadSkybox(sky_faces);
 	
     std::cout<<"###Texs done###"<<std::endl;
@@ -455,6 +455,7 @@ int main()
         tmp.internal.setPosition({basepos + rand() % 111, basepos + rand() % 111, basepos - rand() % 111 }); //korekta początkowego ułożenia asteroid
         tmp.internal.setRotationAngle(static_cast<object::whichAngle>(rand() % 3), rand() % 360);
         tmp.dlaKuli.updatePosition(tmp.internal.getPosition());
+        tmp.movAnimDir = {rand() % 2, rand() % 2, rand() % 2}; //znormalizowany wektor kierunku ruchu
         //tmp.dlaGracza.setRadius(6);
         asteroids.push_back(tmp);
 
@@ -464,7 +465,6 @@ int main()
 
 
     bakPak.setPosition(glm::vec3( 0.0f,  0.0f,  0.0f));
-    bakPak.setRotationAngle(object::whichAngle::roll, 21);
     bakPak.setRotationAngle(object::whichAngle::yaw, 180);
 	
 	//INICJALIZACJA SYSTEMU CZĄSTECZEK
@@ -530,7 +530,7 @@ int main()
         win.clearScreen();
 
         view  = cam.getViewMatrix();
-        projection = glm::perspective(glm::radians(cam.zoom), (float)win.width() / (float)win.height(), 0.1f, 500.0f);
+        projection = glm::perspective(glm::radians(cam.zoom), (float)win.width() / (float)win.height(), 0.1f, 1000.0f);
 		
 		//skybox
 		glDepthMask(GL_FALSE);
@@ -566,8 +566,8 @@ int main()
 		
 		//pozycja światła
         shp->setUniform("actCameraPos", cam.getPosition());
-        shp->setUniform("staticLightPos", glm::vec3(100,0,0));
-		shp->setUniform("lightColor", glm::vec3(1.0f,0.95f,0.9f));
+        shp->setUniform("staticLightPos", glm::vec3(4370,4500,7780));
+		//shp->setUniform("lightColor", glm::vec3(1.0f,0.95f,0.9f)); //od bakPak?
         
         //shp->setUniform("dirlight.dir", -cam.antidirection);
 
@@ -620,7 +620,7 @@ int main()
             shp->setUniform("expltime", 0.0f);
 
             //usuwanie starych asteroidów
-            if(f.explTime.getLifetime() > 60)
+            if(f.explTime.getLifetime() > 15)
             {
                 explodedAsteroids.erase(explodedAsteroids.begin() + i);
                 i--;
@@ -639,7 +639,7 @@ int main()
 		shp->setUniform("view", (view)); //przywrócenie normalnego view matrix
         shp->setUniform("hasSpecularTex", false);
 
-        ///////animacje asteroid
+        ///////animacje/ruch asteroid
         for(auto &i : asteroids)
         {
             if(i.rotCnt > 0)
@@ -647,6 +647,14 @@ int main()
                 auto selAngle = static_cast<object::whichAngle>(rand() % 3);
                 i.internal.setRotationAngle( selAngle, i.internal.getRotationAngle(selAngle) + cl.getDelta() * 50 );
                 i.rotCnt--;
+            }
+            //powolny ruch asteroidy
+            const float animMoveSpeed = 0.7f; //prędkość poruszania się asteroid
+            if(i.movAnimDir.x != 0 || i.movAnimDir.y != 0 || i.movAnimDir.z != 0)
+            {
+                i.internal.setPosition(i.internal.getPosition() + i.movAnimDir * animMoveSpeed * cl.getDelta());
+                i.dlaKuli.updatePosition(i.internal.getPosition());
+                i.dlaGracza.updatePosition(i.internal.getPosition());
             }
 
         }

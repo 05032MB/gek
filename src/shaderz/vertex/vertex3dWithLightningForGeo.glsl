@@ -19,7 +19,7 @@ uniform mat4 projection;
 void main()
 {
     // note that we read the multiplication from right to left
-    gl_Position = projection * view * model * vec4(pos, 1.0);
+    gl_Position = vec4(pos, 1.0);
     ss.texCoord = inTexCoord;
     ss.objColor = colors;
     ss.objNormals = mat3(transpose(inverse(model))) * normals; //konwersja z przestrzenii świata

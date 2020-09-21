@@ -17,10 +17,14 @@ out vec3 objColor;
 out vec3 worldPos;
 out vec3 objNormals;
 
+uniform mat4 model;
+uniform mat4 view;
+uniform mat4 projection;
+
 vec4 explode(vec4 position, vec3 normal)
 {
-    float magnitude = 70.0f;
-    vec3 direction = normal * (magnitude * (1 - exp(-0.3f * expltime)) ); //wypłaszczona krzywa po czasie
+    float magnitude = 30.0f;
+    vec3 direction = normal * (magnitude * (1 - exp(-0.3f * (expltime + 1))) ); //wypłaszczona krzywa po czasie
     //vec3 direction = normal * expltime * magnitude; //alternatywa - liniowy rozpad, brak spowolnienia
     return position + vec4(direction, 0.0);
 }
@@ -43,8 +47,8 @@ void passRest(int n)
 void main() {    
     for(int i = 0; i < 3; i++)
     {
-        if(expltime > 0)gl_Position = explode(gl_in[i].gl_Position, getPlaneNormal());
-        else gl_Position = gl_in[i].gl_Position;
+        if(expltime > 0)gl_Position = projection * view * model * explode(gl_in[i].gl_Position, getPlaneNormal());
+        else gl_Position = projection * view * model * gl_in[i].gl_Position;
         passRest(i);
         EmitVertex();
     }
