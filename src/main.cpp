@@ -555,21 +555,11 @@ int main()
 		envmap_shp->setUniform("cameraPos", cam.getPosition());
 
         bakPak.draw();
-		/* statek lustro
-		envmap_shp->setUniform("view", (glm::mat4(1.0f))); //przyklejenie statku do kamery poprzez 1 w view matrix
-		glm::mat4 shipModelMat = glm::mat4(1.0f);
-        shipModelMat = glm::translate(shipModelMat, glm::vec3( 0.0f,  0.0f,  -7.0f));
-        envmap_shp->setUniform("model", shipModelMat);
-        ship.draw();
-		*/
 		shp->activate();
 		
 		//pozycja światła
         shp->setUniform("actCameraPos", cam.getPosition());
         shp->setUniform("staticLightPos", glm::vec3(4370,4500,7780));
-		//shp->setUniform("lightColor", glm::vec3(1.0f,0.95f,0.9f)); //od bakPak?
-        
-        //shp->setUniform("dirlight.dir", -cam.antidirection);
 
         shp->setUniform("view", (view));
         shp->setUniform("projection", (projection));
@@ -620,7 +610,7 @@ int main()
             shp->setUniform("expltime", 0.0f);
 
             //usuwanie starych asteroidów
-            if(f.explTime.getLifetime() > 15)
+            if(f.explTime.getLifetime() > 5)
             {
                 explodedAsteroids.erase(explodedAsteroids.begin() + i);
                 i--;
@@ -629,7 +619,7 @@ int main()
         ///////
 
         shp->setUniform("hasSpecularTex", true);
-		//### statek lustro	###	
+		
 		shp->setUniform("view", (glm::mat4(1.0f))); //przyklejenie statku do kamery poprzez 1 w view matrix
 		glm::mat4 shipModelMat = glm::mat4(1.0f);
         ship.setPosition(cam.getPosition());
@@ -638,7 +628,7 @@ int main()
         shipModelMat = glm::translate(shipModelMat, glm::vec3( 0.0f,  0.0f,  -7.0f));
         shp->setUniform("model", shipModelMat);
         ship.draw();
-		//### statek lustro ###
+		
 		shp->setUniform("view", (view)); //przywrócenie normalnego view matrix
         shp->setUniform("hasSpecularTex", false);
 
@@ -652,7 +642,7 @@ int main()
                 i.rotCnt--;
             }
             //powolny ruch asteroidy
-            const float animMoveSpeed = 0.7f; //prędkość poruszania się asteroid
+            const float animMoveSpeed = 2.0f + (((float) rand()) / ((float) RAND_MAX)) * 2.0f; //prędkość poruszania się asteroid
             if(i.movAnimDir.x != 0 || i.movAnimDir.y != 0 || i.movAnimDir.z != 0)
             {
                 i.internal.setPosition(i.internal.getPosition() + i.movAnimDir * animMoveSpeed * cl.getDelta());
@@ -697,7 +687,7 @@ int main()
 
             if(unlikely(isThere.first != -1))   //do strzelania dochodzi statystycznie rzadko
             {
-                auto spawn = rand() % 3 + 2;
+                auto spawn = rand() % 2 + 2;
                 auto &delCandidate = asteroids[isThere.second];
 
                 while(spawn-- && delCandidate.tty > 0)

@@ -1,13 +1,11 @@
 #version 330 core
 out vec4 FragColor;
 
-in vec2 texCoord;
 in vec3 Normal;
 in vec3 Position;
 
 uniform vec3 cameraPos;
 uniform samplerCube skybox;
-uniform sampler2D regularTex;
 
 void main()
 {             
