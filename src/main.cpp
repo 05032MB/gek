@@ -553,6 +553,7 @@ int main()
 		envmap_shp->setUniform("projection", (projection));
 		envmap_shp->setUniform("view", cam.getViewMatrix());
 		envmap_shp->setUniform("cameraPos", cam.getPosition());
+
         bakPak.draw();
 		/* statek lustro
 		envmap_shp->setUniform("view", (glm::mat4(1.0f))); //przyklejenie statku do kamery poprzez 1 w view matrix
