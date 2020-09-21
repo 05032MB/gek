@@ -344,7 +344,7 @@ int main()
     simpleClock cl;
     simpleClock shootDelayer;
 
-    const unsigned numAst = 20;	//zwiększona liczba asteroid
+    const unsigned numAst = 30;	//performance spada przy większej liczbie
 	
 	//regular shader
     auto shp = std::make_shared<shaderProgram>();
