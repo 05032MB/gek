@@ -632,6 +632,9 @@ int main()
 		//### statek lustro	###	
 		shp->setUniform("view", (glm::mat4(1.0f))); //przyklejenie statku do kamery poprzez 1 w view matrix
 		glm::mat4 shipModelMat = glm::mat4(1.0f);
+        ship.setPosition(cam.getPosition());
+        ship.setRotationAngle(object::whichAngle::pitch, cam.pitch);
+        ship.setRotationAngle(object::whichAngle::yaw, cam.yaw);
         shipModelMat = glm::translate(shipModelMat, glm::vec3( 0.0f,  0.0f,  -7.0f));
         shp->setUniform("model", shipModelMat);
         ship.draw();
