@@ -1,0 +1,27 @@
+name: Ubuntu Build on master
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules: 'recursive'
+    - name: Install deps
+      run: sudo apt install libglfw3-dev libglew-dev mesa-common-dev libglm-dev git
+    - name: ls
+      run: ls -al
+    - name: make
+      run: make all
+    - uses: actions/upload-artifact@v2
+      with:
+        name: gek.app
+        path: gek.app
